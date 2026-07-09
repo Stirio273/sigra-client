@@ -11,7 +11,7 @@ import Dashboard from "@/pages/dashboard/Dashboard";
 export function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      {/* <AuthProvider> */}
         <Routes>
 
           {/* Public Routes */}
@@ -20,18 +20,18 @@ export function App() {
           <Route path="/forbidden" element={<ForbiddenPage />} />
 
           {/* Protected Routes (authentication required) */}
-          <Route element={<ProtectedRoute />}>
+          {/* <Route element={<ProtectedRoute />}> */}
             <Route path="/dashboard" element={<Dashboard />} />
             {/* <Route path="/profile" element={<ProfilePage />} /> */}
-          </Route>
+          {/* </Route> */}
 
           {/* Role-based Protected Routes */}
-          <Route element={<ProtectedRoute requiredRoles={['Admin']} />}>
+          {/* <Route element={<ProtectedRoute requiredRoles={['Admin']} />}> */}
             {/* <Route path="/admin" element={<AdminPage />} /> */}
-          </Route>
+          {/* </Route> */}
 
         </Routes>
-      </AuthProvider>
+      {/* </AuthProvider> */}
     </BrowserRouter>
   );
 }
