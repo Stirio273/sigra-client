@@ -3,6 +3,7 @@
 import type { User } from '../types/auth.types';
 
 const API_URL = import.meta.env.VITE_API_URL;
+const MOCK_USER_EMAIL = import.meta.env.VITE_MOCK_USER_EMAIL;
 
 export const authService = {
     /**
@@ -10,12 +11,18 @@ export const authService = {
      * and retrieve current user info
      */
     getCurrentUser: async (): Promise<User> => {
-        const response = await fetch(`${API_URL}/api/Authentication`, {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+
+        if (MOCK_USER_EMAIL) {
+            headers['X-Mock-User'] = MOCK_USER_EMAIL;
+        }
+
+        const response = await fetch(`${API_URL}/Authentication/profile`, {
             method: 'GET',
             credentials: 'include', // Required for Kerberos
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers,
         });
 
         if (response.status === 401) {

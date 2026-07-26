@@ -1,12 +1,11 @@
-import React, { useState } from "react"
-import { LayoutDashboard, Users, BarChart3, Puzzle, Wrench, Search, Plus, Settings2, UserCheck, UserPlus } from "lucide-react"
+import React, { useEffect, useState } from "react"
+import { Plus, Settings2, UserCheck, UserPlus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Select,
@@ -21,8 +20,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import { ticketService } from "@/services/ticket.service"
+import type { PaginatedResponse, Ticket } from "@/types/ticket"
+import TopBar from "@/components/itsm/TopBar"
 
-type Ticket = {
+type TicketRow = {
   id: string
   subject: string
   assignedTo: string
@@ -30,51 +40,27 @@ type Ticket = {
   status: string
 }
 
-const SAMPLE_TICKETS: Ticket[] = [
-  { id: "1312312", subject: "Unable to browse", assignedTo: "Howard Stern", group: "Network", status: "Pending" },
-  { id: "1312313", subject: "Blue screen occurred", assignedTo: "Administrator", group: "Network", status: "Resolved" },
-  { id: "1312314", subject: "Upgrade to IE Browser", assignedTo: "Thufail", group: "", status: "Pending" },
-  { id: "1312315", subject: "Request with Conversation", assignedTo: "Network tech", group: "", status: "Assigned" },
-  { id: "1312316", subject: "Add success", assignedTo: "Administrator", group: "Network", status: "Resolved" },
-]
-
-function TopBar() {
-  return (
-    <div className="flex items-center justify-between border-b pb-4 mb-4">
-      <div className="flex items-center gap-6">
-        <div className="text-primary font-semibold">Dashboard</div>
-        <nav className="text-sm flex gap-4">
-          <a className="flex items-center gap-1.5 hover:underline">
-            <LayoutDashboard size={16} /> Dashboard
-          </a>
-          <a className="flex items-center gap-1.5 hover:underline">
-            <Users size={16} /> Teams
-          </a>
-          <a className="flex items-center gap-1.5 hover:underline">
-            <BarChart3 size={16} /> Reports
-          </a>
-          <a className="flex items-center gap-1.5 hover:underline">
-            <Puzzle size={16} /> Modules
-          </a>
-          <a className="flex items-center gap-1.5 hover:underline">
-            <Wrench size={16} /> Tools
-          </a>
-        </nav>
-      </div>
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          <Search size={16} className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-          <Input placeholder="Search Request ID" className="pl-8 w-64" />
-        </div>
-        <Avatar>
-          <AvatarFallback className="bg-muted text-muted-foreground">JD</AvatarFallback>
-        </Avatar>
-      </div>
-    </div>
-  )
+function mapTicket(t: Ticket): TicketRow {
+  return {
+    id: t.numeroTicket,
+    subject: t.demandeurEmail,
+    assignedTo: t.idTechnicienAssigne ? `Assignee #${t.idTechnicienAssigne}` : "Unassigned",
+    group: t.demandeurDirection || undefined,
+    status: t.idStatut ? `Statut #${t.idStatut}` : "Open",
+  }
 }
 
-function TicketTable({ tickets }: { tickets: Ticket[] }) {
+function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }: {
+  tickets: TicketRow[]
+  pageNumber: number
+  pageSize: number
+  totalCount: number
+  onPageChange: (page: number) => void
+}) {
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+  const start = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + 1
+  const end = Math.min(pageNumber * pageSize, totalCount)
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -114,7 +100,7 @@ function TicketTable({ tickets }: { tickets: Ticket[] }) {
           </DropdownMenu>
         </div>
         <div className="text-sm text-muted-foreground">
-          Total tickets <span className="font-medium">312</span>
+          Total tickets <span className="font-medium">{totalCount}</span>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -122,7 +108,7 @@ function TicketTable({ tickets }: { tickets: Ticket[] }) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-12"><Input type="checkbox" className="h-4 w-4" /></TableHead>
-              <TableHead>Ticket ID</TableHead>
+              <TableHead>Ticket#</TableHead>
               <TableHead>Subjects</TableHead>
               <TableHead>Assigned to</TableHead>
               <TableHead>Group</TableHead>
@@ -139,16 +125,43 @@ function TicketTable({ tickets }: { tickets: Ticket[] }) {
                 <TableCell>{t.assignedTo}</TableCell>
                 <TableCell>{t.group || "-"}</TableCell>
                 <TableCell>
-                  <Badge variant={t.status === "Resolved" ? "default" : t.status === "Pending" ? "secondary" : "outline"}>
-                    {t.status}
-                  </Badge>
+                  <Badge variant="outline">{t.status}</Badge>
                 </TableCell>
                 <TableCell className="text-muted-foreground">✉ ✎ ⌖</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-        <div className="p-4 text-sm text-muted-foreground border-t">Showing 1-5 of 312</div>
+        <div className="flex items-center justify-between p-4 text-sm text-muted-foreground border-t">
+          <div>
+            Showing {start}-{end} of {totalCount}
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => onPageChange(Math.max(1, pageNumber - 1))}
+                  className={pageNumber === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink
+                  isActive
+                  onClick={() => {}}
+                  className="cursor-default"
+                >
+                  {pageNumber}
+                </PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => onPageChange(Math.min(totalPages, pageNumber + 1))}
+                  className={pageNumber === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </CardContent>
     </Card>
   )
@@ -204,6 +217,27 @@ function RightPanel() {
 }
 
 export default function Dashboard() {
+  const [data, setData] = useState<PaginatedResponse<Ticket> | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchTickets = async (pageNumber: number = 1, pageSize: number = 20) => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const result = await ticketService.getAll(pageNumber, pageSize)
+      setData(result)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'TICKETS_FETCH_FAILED')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchTickets()
+  }, [])
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-full mx-auto">
@@ -222,7 +256,19 @@ export default function Dashboard() {
               </div>
               <div className="text-sm text-muted-foreground">Help & Support</div>
             </div>
-            <TicketTable tickets={SAMPLE_TICKETS} />
+            {error ? (
+              <Card>
+                <CardContent className="p-6 text-sm text-red-600">Failed to load tickets: {error}</CardContent>
+              </Card>
+            ) : (
+              <TicketTable
+                tickets={data ? data.items.map(mapTicket) : []}
+                pageNumber={data?.pageNumber ?? 1}
+                pageSize={data?.pageSize ?? 20}
+                totalCount={data?.totalCount ?? 0}
+                onPageChange={(page) => fetchTickets(page, data?.pageSize ?? 20)}
+              />
+            )}
           </div>
           <RightPanel />
         </div>
