@@ -29,7 +29,9 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { ticketService } from "@/services/ticket.service"
+import { technicianService } from "@/services/technician.service"
 import type { PaginatedResponse, Ticket } from "@/types/ticket"
+import type { Technician } from "@/types/technician"
 import TopBar from "@/components/itsm/TopBar"
 
 type TicketRow = {
@@ -57,6 +59,55 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
   totalCount: number
   onPageChange: (page: number) => void
 }) {
+  const [technicians, setTechnicians] = useState<Technician[]>([])
+  const [techLoading, setTechLoading] = useState(true)
+  const [techError, setTechError] = useState<string | null>(null)
+  const [selectedTechnician, setSelectedTechnician] = useState<Technician | null>(null)
+  const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set())
+  const [assignStatus, setAssignStatus] = useState<string | null>(null)
+
+  const toggleTicket = (id: string) => {
+    setSelectedTickets((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const handleAssign = () => {
+    if (!selectedTechnician) {
+      setAssignStatus('Please select a technician first')
+      return
+    }
+    if (selectedTickets.size === 0) {
+      setAssignStatus('Please select at least one ticket')
+      return
+    }
+    setAssignStatus(`Assigned ${selectedTickets.size} ticket(s) to ${selectedTechnician.prenom ? `${selectedTechnician.prenom} ${selectedTechnician.nom}` : selectedTechnician.nom}`)
+    setSelectedTickets(new Set())
+  }
+
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      try {
+        setTechLoading(true)
+        setTechError(null)
+        const data = await technicianService.getAll()
+        setTechnicians(data)
+      } catch (err) {
+        setTechError(err instanceof Error ? err.message : 'TECHNICIANS_FETCH_FAILED')
+      } finally {
+        setTechLoading(false)
+      }
+    }
+
+    fetchTechnicians()
+  }, [])
+
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const start = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + 1
   const end = Math.min(pageNumber * pageSize, totalCount)
@@ -79,35 +130,65 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Button variant="ghost" size="sm" className="h-8 px-2">
-                <UserCheck className="mr-2 h-4 w-4" /> Select Technicians
+                <UserCheck className="mr-2 h-4 w-4" />
+                {selectedTechnician ? (selectedTechnician.prenom ? `${selectedTechnician.prenom} ${selectedTechnician.nom}` : selectedTechnician.nom) : 'Select Technicians'}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuItem>New Select 1</DropdownMenuItem>
-              <DropdownMenuItem>New Select 2</DropdownMenuItem>
+              {techLoading ? (
+                <DropdownMenuItem disabled>Loading...</DropdownMenuItem>
+              ) : techError ? (
+                <DropdownMenuItem disabled>Failed to load technicians</DropdownMenuItem>
+              ) : technicians.length === 0 ? (
+                <DropdownMenuItem disabled>No technicians found</DropdownMenuItem>
+              ) : (
+                technicians.map((tech) => (
+                  <DropdownMenuItem
+                    key={tech.userGuid}
+                    onChange={() => setSelectedTechnician(tech)}
+                  >
+                    {tech.prenom ? `${tech.prenom} ${tech.nom}` : tech.nom}
+                  </DropdownMenuItem>
+                ))
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <UserPlus className="mr-2 h-4 w-4" /> Assign
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem>New Assign 1</DropdownMenuItem>
-              <DropdownMenuItem>New Assign 2</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2"
+            onClick={handleAssign}
+          >
+            <UserPlus className="mr-2 h-4 w-4" /> Assign
+          </Button>
         </div>
         <div className="text-sm text-muted-foreground">
           Total tickets <span className="font-medium">{totalCount}</span>
         </div>
+        {assignStatus && (
+          <div className="text-xs text-muted-foreground">
+            {assignStatus}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12"><Input type="checkbox" className="h-4 w-4" /></TableHead>
+              <TableHead className="w-12">
+                <Input
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={tickets.length > 0 && selectedTickets.size === tickets.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedTickets(new Set(tickets.map((t) => t.id)))
+                    } else {
+                      setSelectedTickets(new Set())
+                    }
+                  }}
+                />
+              </TableHead>
               <TableHead>Ticket#</TableHead>
               <TableHead>Subjects</TableHead>
               <TableHead>Assigned to</TableHead>
@@ -119,7 +200,14 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
           <TableBody>
             {tickets.map((t) => (
               <TableRow key={t.id} className="hover:bg-muted/50">
-                <TableCell><Input type="checkbox" className="h-4 w-4" /></TableCell>
+                <TableCell>
+                  <Input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={selectedTickets.has(t.id)}
+                    onChange={() => toggleTicket(t.id)}
+                  />
+                </TableCell>
                 <TableCell className="text-slate-700">{t.id}</TableCell>
                 <TableCell className="text-primary hover:underline cursor-pointer">{t.subject}</TableCell>
                 <TableCell>{t.assignedTo}</TableCell>
