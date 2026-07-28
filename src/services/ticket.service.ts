@@ -25,4 +25,25 @@ export const ticketService = {
 
     return response.json();
   },
+
+  assignTickets: async (ticketIds: number[], userGuid: string): Promise<void> => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (MOCK_USER_EMAIL) {
+      headers['X-Mock-User'] = MOCK_USER_EMAIL;
+    }
+
+    const response = await fetch(`${API_URL}/tickets/assign`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers,
+      body: JSON.stringify({ userGuid, ticketIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error('ASSIGN_TICKETS_FAILED');
+    }
+  },
 };

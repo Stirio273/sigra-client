@@ -10,7 +10,7 @@ export type Ticket = {
   idApplication: number | null;
   idCriticite: number | null;
   idStatut: number | null;
-  idTechnicienAssigne: number | null;
+  technicienAssigne: any | null;
   demandeurEmail: string;
   demandeurDirection: string;
   dateCloture: string | null;
@@ -31,7 +31,7 @@ export type TicketCreate = Pick<
   Ticket,
   | "numeroTicket"
   | "idStatut"
-  | "idTechnicienAssigne"
+  | "technicienAssigne"
   | "demandeurEmail"
   | "demandeurDirection"
   | "dureeSla"
@@ -43,7 +43,7 @@ export type TicketUpdate = Partial<
     Ticket,
     | "numeroTicket"
     | "idStatut"
-    | "idTechnicienAssigne"
+    | "technicienAssigne"
     | "dateCreation"
     | "dateCloture"
     | "dureeSla"

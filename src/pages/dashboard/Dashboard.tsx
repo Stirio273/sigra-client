@@ -35,7 +35,8 @@ import type { Technician } from "@/types/technician"
 import TopBar from "@/components/itsm/TopBar"
 
 type TicketRow = {
-  id: string
+  id: number
+  numeroTicket: string
   subject: string
   assignedTo: string
   group?: string
@@ -44,9 +45,10 @@ type TicketRow = {
 
 function mapTicket(t: Ticket): TicketRow {
   return {
-    id: t.numeroTicket,
+    id: t.idTicket,
+    numeroTicket: t.numeroTicket,
     subject: t.demandeurEmail,
-    assignedTo: t.idTechnicienAssigne ? `Assignee #${t.idTechnicienAssigne}` : "Unassigned",
+    assignedTo: t.technicienAssigne ? `${t.technicienAssigne.email}` : "Unassigned",
     group: t.demandeurDirection || undefined,
     status: t.idStatut ? `Statut #${t.idStatut}` : "Open",
   }
@@ -63,10 +65,10 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
   const [techLoading, setTechLoading] = useState(true)
   const [techError, setTechError] = useState<string | null>(null)
   const [selectedTechnician, setSelectedTechnician] = useState<Technician | null>(null)
-  const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set())
+  const [selectedTickets, setSelectedTickets] = useState<Set<number>>(new Set())
   const [assignStatus, setAssignStatus] = useState<string | null>(null)
 
-  const toggleTicket = (id: string) => {
+  const toggleTicket = (id: number) => {
     setSelectedTickets((prev) => {
       const next = new Set(prev)
       if (next.has(id)) {
@@ -78,7 +80,7 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
     })
   }
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (!selectedTechnician) {
       setAssignStatus('Please select a technician first')
       return
@@ -87,8 +89,13 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
       setAssignStatus('Please select at least one ticket')
       return
     }
-    setAssignStatus(`Assigned ${selectedTickets.size} ticket(s) to ${selectedTechnician.prenom ? `${selectedTechnician.prenom} ${selectedTechnician.nom}` : selectedTechnician.nom}`)
-    setSelectedTickets(new Set())
+    try {
+      await ticketService.assignTickets(Array.from(selectedTickets), selectedTechnician.userGuid as string)
+      setAssignStatus(`Assigned ${selectedTickets.size} ticket(s) to ${selectedTechnician.prenom ? `${selectedTechnician.prenom} ${selectedTechnician.nom}` : selectedTechnician.nom}`)
+      setSelectedTickets(new Set())
+    } catch (err) {
+      setAssignStatus(err instanceof Error ? err.message : 'ASSIGN_FAILED')
+    }
   }
 
   useEffect(() => {
@@ -162,7 +169,7 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
           Total tickets <span className="font-medium">{totalCount}</span>
         </div>
         {assignStatus && (
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-emerald-600 font-medium">
             {assignStatus}
           </div>
         )}
@@ -204,7 +211,7 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
                     onChange={() => toggleTicket(t.id)}
                   />
                 </TableCell>
-                <TableCell className="text-slate-700">{t.id}</TableCell>
+                <TableCell className="text-slate-700">{t.numeroTicket}</TableCell>
                 <TableCell className="text-primary hover:underline cursor-pointer">{t.subject}</TableCell>
                 <TableCell>{t.assignedTo}</TableCell>
                 <TableCell>{t.group || "-"}</TableCell>
