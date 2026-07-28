@@ -117,10 +117,8 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex gap-2 items-center">
           <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <Settings2 className="mr-2 h-4 w-4" /> Actions
-              </Button>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 px-2"></Button>}>
+              <Settings2 className="mr-2 h-4 w-4" /> Actions
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem>New Action 1</DropdownMenuItem>
@@ -128,11 +126,9 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <UserCheck className="mr-2 h-4 w-4" />
-                {selectedTechnician ? (selectedTechnician.prenom ? `${selectedTechnician.prenom} ${selectedTechnician.nom}` : selectedTechnician.nom) : 'Select Technicians'}
-              </Button>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 px-2" />}>
+              <UserCheck className="mr-2 h-4 w-4" />
+              {selectedTechnician ? (selectedTechnician.prenom ? `${selectedTechnician.prenom} ${selectedTechnician.nom}` : selectedTechnician.nom) : 'Select Technicians'}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               {techLoading ? (
@@ -145,7 +141,7 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
                 technicians.map((tech) => (
                   <DropdownMenuItem
                     key={tech.userGuid}
-                    onChange={() => setSelectedTechnician(tech)}
+                    onClick={() => setSelectedTechnician(tech)}
                   >
                     {tech.prenom ? `${tech.prenom} ${tech.nom}` : tech.nom}
                   </DropdownMenuItem>
@@ -235,7 +231,7 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
               <PaginationItem>
                 <PaginationLink
                   isActive
-                  onClick={() => {}}
+                  onClick={() => { }}
                   className="cursor-default"
                 >
                   {pageNumber}
