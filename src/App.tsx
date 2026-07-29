@@ -6,6 +6,7 @@ import ForbiddenPage from './components/auth/ForbiddenPage';
 
 // Pages
 import Dashboard from "@/pages/dashboard/Dashboard";
+import FicheTicket from "@/pages/itsm/FicheTicket";
 
 
 export function App() {
@@ -22,7 +23,7 @@ export function App() {
           {/* Protected Routes (authentication required) */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            {/* <Route path="/profile" element={<ProfilePage />} /> */}
+            <Route path="/tickets/:id" element={<FicheTicket />} />
           </Route>
 
           {/* Role-based Protected Routes */}

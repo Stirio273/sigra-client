@@ -3,5 +3,5 @@ export type Technician = {
   nom: string;
   prenom?: string;
   email?: string;
-  userGuid?: string;
+  userGuid: string;
 };

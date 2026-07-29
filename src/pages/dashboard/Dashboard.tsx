@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useContext } from "react"
 import { Plus, Settings2, UserCheck, UserPlus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -33,6 +33,7 @@ import { technicianService } from "@/services/technician.service"
 import type { PaginatedResponse, Ticket } from "@/types/ticket"
 import type { Technician } from "@/types/technician"
 import TopBar from "@/components/itsm/TopBar"
+import { AuthContext } from "@/context/AuthContext"
 
 type TicketRow = {
   id: number
@@ -50,17 +51,21 @@ function mapTicket(t: Ticket): TicketRow {
     subject: t.demandeurEmail,
     assignedTo: t.technicienAssigne ? `${t.technicienAssigne.email}` : "Unassigned",
     group: t.demandeurDirection || undefined,
-    status: t.idStatut ? `Statut #${t.idStatut}` : "Open",
+    status: t.statut ? `${t.statut.libelle}` : "Nouveau",
   }
 }
 
-function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }: {
+function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, onAssignSuccess }: {
   tickets: TicketRow[]
   pageNumber: number
   pageSize: number
   totalCount: number
   onPageChange: (page: number) => void
+  onAssignSuccess?: (technicianId: number, technicianEmail: string, ticketIds: number[]) => void
 }) {
+  const authContext = useContext(AuthContext)
+  const isAdmin = authContext?.user?.role == 'Administrateur'
+
   const [technicians, setTechnicians] = useState<Technician[]>([])
   const [techLoading, setTechLoading] = useState(true)
   const [techError, setTechError] = useState<string | null>(null)
@@ -90,9 +95,11 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
       return
     }
     try {
-      await ticketService.assignTickets(Array.from(selectedTickets), selectedTechnician.userGuid as string)
+      const ticketIds = Array.from(selectedTickets)
+      await ticketService.assignTickets(ticketIds, selectedTechnician.userGuid)
       setAssignStatus(`Assigned ${selectedTickets.size} ticket(s) to ${selectedTechnician.prenom ? `${selectedTechnician.prenom} ${selectedTechnician.nom}` : selectedTechnician.nom}`)
       setSelectedTickets(new Set())
+      onAssignSuccess?.(selectedTechnician.idUtilisateur, selectedTechnician.email || '', ticketIds)
     } catch (err) {
       setAssignStatus(err instanceof Error ? err.message : 'ASSIGN_FAILED')
     }
@@ -123,47 +130,51 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex gap-2 items-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 px-2"></Button>}>
-              <Settings2 className="mr-2 h-4 w-4" /> Actions
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem>New Action 1</DropdownMenuItem>
-              <DropdownMenuItem>New Action 2</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 px-2" />}>
-              <UserCheck className="mr-2 h-4 w-4" />
-              {selectedTechnician ? (selectedTechnician.prenom ? `${selectedTechnician.prenom} ${selectedTechnician.nom}` : selectedTechnician.nom) : 'Select Technicians'}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {techLoading ? (
-                <DropdownMenuItem disabled>Loading...</DropdownMenuItem>
-              ) : techError ? (
-                <DropdownMenuItem disabled>Failed to load technicians</DropdownMenuItem>
-              ) : technicians.length === 0 ? (
-                <DropdownMenuItem disabled>No technicians found</DropdownMenuItem>
-              ) : (
-                technicians.map((tech) => (
-                  <DropdownMenuItem
-                    key={tech.userGuid}
-                    onClick={() => setSelectedTechnician(tech)}
-                  >
-                    {tech.prenom ? `${tech.prenom} ${tech.nom}` : tech.nom}
-                  </DropdownMenuItem>
-                ))
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2"
-            onClick={handleAssign}
-          >
-            <UserPlus className="mr-2 h-4 w-4" /> Assign
-          </Button>
+          {isAdmin && (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 px-2"></Button>}>
+                  <Settings2 className="mr-2 h-4 w-4" /> Actions
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem>New Action 1</DropdownMenuItem>
+                  <DropdownMenuItem>New Action 2</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-8 px-2" />}>
+                  <UserCheck className="mr-2 h-4 w-4" />
+                  {selectedTechnician ? (selectedTechnician.prenom ? `${selectedTechnician.prenom} ${selectedTechnician.nom}` : selectedTechnician.nom) : 'Choisir un technicien'}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {techLoading ? (
+                    <DropdownMenuItem disabled>Loading...</DropdownMenuItem>
+                  ) : techError ? (
+                    <DropdownMenuItem disabled>Failed to load technicians</DropdownMenuItem>
+                  ) : technicians.length === 0 ? (
+                    <DropdownMenuItem disabled>No technicians found</DropdownMenuItem>
+                  ) : (
+                    technicians.map((tech) => (
+                      <DropdownMenuItem
+                        key={tech.idUtilisateur}
+                        onClick={() => setSelectedTechnician(tech)}
+                      >
+                        {tech.prenom ? `${tech.prenom} ${tech.nom}` : tech.nom}
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={handleAssign}
+              >
+                <UserPlus className="mr-2 h-4 w-4" /> Assigner
+              </Button>
+            </>
+          )}
         </div>
         <div className="text-sm text-muted-foreground">
           Total tickets <span className="font-medium">{totalCount}</span>
@@ -193,10 +204,10 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange }
                 />
               </TableHead>
               <TableHead>Ticket#</TableHead>
-              <TableHead>Subjects</TableHead>
-              <TableHead>Assigned to</TableHead>
-              <TableHead>Group</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Email demandeur</TableHead>
+              <TableHead>Assigné à</TableHead>
+              <TableHead>Nom demandeur</TableHead>
+              <TableHead>Statut</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -263,13 +274,13 @@ function RightPanel() {
     <aside className="w-80 pl-6 space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Create New Ticket (Quick)</CardTitle>
+          <CardTitle className="text-base">Créer un Ticket (Quick)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Input placeholder="Requester name" />
+          <Input placeholder="Nom du demandeur" />
           <Select>
             <SelectTrigger>
-              <SelectValue placeholder="Site - associate to" />
+              <SelectValue placeholder="Departement" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="site">Site A</SelectItem>
@@ -278,7 +289,7 @@ function RightPanel() {
           <textarea placeholder="Description" className="w-full border rounded px-2 py-1.5 text-sm min-h-[80px]" />
           <Button className="w-full">
             <Plus size={16} className="mr-2" />
-            Create Ticket
+            Créer
           </Button>
         </CardContent>
       </Card>
@@ -339,13 +350,13 @@ export default function Dashboard() {
               <div className="flex items-center gap-3">
                 <Tabs defaultValue="all">
                   <TabsList>
-                    <TabsTrigger value="all">All tasks</TabsTrigger>
+                    <TabsTrigger value="all">Tous les tickets</TabsTrigger>
                   </TabsList>
                 </Tabs>
-                <Button variant="link" size="sm" className="h-auto p-0">Import request</Button>
-                <Button variant="link" size="sm" className="h-auto p-0">Settings</Button>
+                <Button variant="link" size="sm" className="h-auto p-0">Importer une demande</Button>
+                <Button variant="link" size="sm" className="h-auto p-0">Paramètres</Button>
               </div>
-              <div className="text-sm text-muted-foreground">Help & Support</div>
+              <div className="text-sm text-muted-foreground">Aide & Support</div>
             </div>
             {error ? (
               <Card>
@@ -358,6 +369,24 @@ export default function Dashboard() {
                 pageSize={data?.pageSize ?? 20}
                 totalCount={data?.totalCount ?? 0}
                 onPageChange={(page) => fetchTickets(page, data?.pageSize ?? 20)}
+                onAssignSuccess={(technicianId, technicianEmail, ticketIds) => {
+                  setData(prev => {
+                    if (!prev) return prev
+                    return {
+                      ...prev,
+                      items: prev.items.map(ticket =>
+                        ticketIds.includes(ticket.idTicket)
+                          ? {
+                              ...ticket,
+                              idTechnicienAssigne: technicianId,
+                              technicienAssigne: ticketIds.includes(ticket.idTicket) ? { email: technicianEmail } : ticket.technicienAssigne,
+                              statut: "En cours"
+                            }
+                          : ticket
+                      )
+                    }
+                  })
+                }}
               />
             )}
           </div>

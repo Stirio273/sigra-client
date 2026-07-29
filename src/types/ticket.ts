@@ -9,7 +9,7 @@ export type Ticket = {
   dateCreation: string;
   idApplication: number | null;
   idCriticite: number | null;
-  idStatut: number | null;
+  statut: any | null;
   technicienAssigne: any | null;
   demandeurEmail: string;
   demandeurDirection: string;
@@ -30,7 +30,7 @@ export type PaginatedResponse<T> = {
 export type TicketCreate = Pick<
   Ticket,
   | "numeroTicket"
-  | "idStatut"
+  | "statut"
   | "technicienAssigne"
   | "demandeurEmail"
   | "demandeurDirection"
@@ -42,7 +42,7 @@ export type TicketUpdate = Partial<
   Pick<
     Ticket,
     | "numeroTicket"
-    | "idStatut"
+    | "statut"
     | "technicienAssigne"
     | "dateCreation"
     | "dateCloture"

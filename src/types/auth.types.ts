@@ -3,7 +3,7 @@
 export interface User {
   username: string;
   isAuthenticated: boolean;
-  roles: string[];
+  role: string;
 }
 
 export interface AuthState {
