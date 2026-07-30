@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MessageSquare } from "lucide-react"
 import type { EmailMessage } from "@/types/fiche-ticket"
-import EmailMessageComponent from "./EmailMessage"
+import { EmailMessage as EmailMessageComponent } from "./EmailMessage"
 
 interface EmailThreadProps {
   emails: EmailMessage[]
@@ -28,4 +28,4 @@ function EmailThread({ emails }: EmailThreadProps) {
   )
 }
 
-export default EmailThread
+export { EmailThread }

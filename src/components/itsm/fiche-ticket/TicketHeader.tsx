@@ -43,4 +43,4 @@ function TicketHeader({ ticket }: TicketHeaderProps) {
   )
 }
 
-export default TicketHeader
+export { TicketHeader }

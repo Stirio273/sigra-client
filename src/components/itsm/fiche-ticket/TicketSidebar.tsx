@@ -51,4 +51,4 @@ function TicketSidebar({ ticket }: TicketSidebarProps) {
   )
 }
 
-export default TicketSidebar
+export { TicketSidebar }

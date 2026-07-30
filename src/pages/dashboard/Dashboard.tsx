@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext } from "react"
-import { Plus, Settings2, UserCheck, UserPlus } from "lucide-react"
+import { Link } from "react-router-dom"
+import { FileText, Plus, Settings2, UserCheck, UserPlus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -229,7 +230,11 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, 
                 <TableCell>
                   <Badge variant="outline">{t.status}</Badge>
                 </TableCell>
-                <TableCell className="text-muted-foreground">✉ ✎ ⌖</TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="icon-sm" render={<Link to={`/tickets/${t.id}`}></Link>}>
+                    <span className="text-muted-foreground"><FileText size={24}/></span>
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

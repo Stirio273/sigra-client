@@ -21,14 +21,14 @@ const UnauthorizedPage = () => {
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-warning/10 text-warning">
             <ShieldQuestion className="size-6" />
           </div>
-          <CardTitle className="text-2xl">401 - Unauthorized</CardTitle>
+          <CardTitle className="text-2xl">401 - Non autorisé</CardTitle>
           <CardDescription>
-            You must be authenticated to access this page. Please ensure you are connected to the corporate network.
+            Vous devez être authentifié pour accéder à cette page. Veuillez vous assurer que vous êtes connecté au réseau de l'entreprise.
           </CardDescription>
         </CardHeader>
         <CardContent />
         <CardFooter className="flex justify-center">
-          <Button onClick={() => navigate("/")}>Go back home</Button>
+          <Button onClick={() => navigate("/")}>Retour à l'accueil</Button>
         </CardFooter>
       </Card>
     </div>

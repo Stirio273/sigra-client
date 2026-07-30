@@ -54,4 +54,4 @@ function AttachmentList({ attachments }: AttachmentListProps) {
   )
 }
 
-export default AttachmentList
+export { AttachmentList }

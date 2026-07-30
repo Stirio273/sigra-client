@@ -9,8 +9,8 @@ export type Ticket = {
   dateCreation: string;
   idApplication: number | null;
   idCriticite: number | null;
-  statut: any | null;
-  technicienAssigne: any | null;
+  statut: { libelle?: string } | null;
+  technicienAssigne: { email?: string } | null;
   demandeurEmail: string;
   demandeurDirection: string;
   dateCloture: string | null;
@@ -49,3 +49,48 @@ export type TicketUpdate = Partial<
     | "dureeSla"
   >
 >;
+
+export type TicketDetailNavigation = {
+  idApplication?: number;
+  libelle?: string;
+  idCriticite?: number;
+  idStatut?: number;
+  idTechnicienAssigne?: number;
+  nom?: string;
+  prenom?: string;
+  email?: string;
+};
+
+export type TicketDetailEmailSource = {
+  idEmailSource: number;
+  messageIdGraph: string;
+  conversationIdGraph: string;
+  expediteur: string;
+  objet: string;
+  corpsEmail: string;
+  dateReception: string;
+  estEmailInitial: boolean;
+  piecesJointes: TicketDetailAttachment[];
+};
+
+export type TicketDetailAttachment = {
+  idPieceJointe: number;
+  nomFichier: string;
+  chemin: string;
+  tailleOctets: number;
+  typeMime: string;
+};
+
+export type TicketDetail = Ticket & {
+  idApplicationNavigation?: TicketDetailNavigation;
+  idCriticiteNavigation?: TicketDetailNavigation;
+  idStatutNavigation?: TicketDetailNavigation;
+  idTechnicienAssigneNavigation?: TicketDetailNavigation;
+  emailsSources: TicketDetailEmailSource[];
+  commentaires: unknown[];
+  escalades: unknown[];
+  historiqueStatuts: unknown[];
+  notifications: unknown[];
+  reassignations: unknown[];
+  rejet: unknown | null;
+};
