@@ -1,4 +1,5 @@
 export type TicketMetadata = {
+  idTicket: number
   numeroTicket: string
   subject: string
   status: string
@@ -28,4 +29,5 @@ export type Attachment = {
   size: string
   type: string
   sizeBytes: number
+  path: string
 }

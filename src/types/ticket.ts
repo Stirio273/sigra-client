@@ -87,10 +87,10 @@ export type TicketDetail = Ticket & {
   idStatutNavigation?: TicketDetailNavigation;
   idTechnicienAssigneNavigation?: TicketDetailNavigation;
   emailsSources: TicketDetailEmailSource[];
-  commentaires: unknown[];
-  escalades: unknown[];
-  historiqueStatuts: unknown[];
-  notifications: unknown[];
-  reassignations: unknown[];
-  rejet: unknown | null;
+  commentaires: any[];
+  escalades: any[];
+  historiqueStatuts: any[];
+  notifications: any[];
+  reassignations: any[];
+  rejet: any | null;
 };

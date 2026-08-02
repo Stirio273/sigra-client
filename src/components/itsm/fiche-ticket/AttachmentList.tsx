@@ -1,13 +1,31 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Paperclip } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Paperclip, Download } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { Attachment } from "@/types/fiche-ticket"
+import { ticketService } from "@/services/ticket.service"
 
 interface AttachmentListProps {
   attachments: Attachment[]
 }
 
 function AttachmentRow({ attachment }: { attachment: Attachment }) {
+  const handleDownload = async () => {
+    try {
+      const blob = await ticketService.downloadAttachment(attachment.id)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = attachment.name
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch {
+      // download failure
+    }
+  }
+
   return (
     <TableRow>
       <TableCell>
@@ -18,6 +36,11 @@ function AttachmentRow({ attachment }: { attachment: Attachment }) {
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">{attachment.type}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{attachment.size}</TableCell>
+      <TableCell className="w-10">
+        <Button variant="ghost" size="icon-sm" onClick={handleDownload}>
+          <Download size={14} />
+        </Button>
+      </TableCell>
     </TableRow>
   )
 }
@@ -41,6 +64,7 @@ function AttachmentList({ attachments }: AttachmentListProps) {
               <TableHead>Nom</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Taille</TableHead>
+              <TableHead className="w-10">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

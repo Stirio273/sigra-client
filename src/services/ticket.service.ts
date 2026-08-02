@@ -44,6 +44,61 @@ export const ticketService = {
     return response.json();
   },
 
+  downloadAttachment: async (attachment_id: string): Promise<Blob> => {
+    const response = await fetch(`${API_URL}/files/${attachment_id}`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: buildHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('ATTACHMENT_DOWNLOAD_FAILED');
+    }
+
+    return response.blob();
+  },
+
+  respondToRejet: async (idTicket: number, accept: boolean): Promise<void> => {
+    const response = await fetch(`${API_URL}/tickets/request-deny/respond`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: buildHeaders(),
+      body: JSON.stringify({ idTicket, accept }),
+    });
+
+    if (!response.ok) {
+      throw new Error('REJET_RESPONSE_FAILED');
+    }
+  },
+
+  getRejet: async (idTicket: number): Promise<Record<string, unknown> | null> => {
+    const response = await fetch(`${API_URL}/tickets/${idTicket}/rejet`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: buildHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) return null
+      throw new Error('REJET_FETCH_FAILED')
+    }
+
+    return response.json()
+  },
+
+  invalidateTicket: async (idTicket: number, justificatif: string): Promise<void> => {
+    const response = await fetch(`${API_URL}/tickets/request-deny`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: buildHeaders(),
+      body: JSON.stringify({ idTicket, justificatif }),
+    });
+
+    if (!response.ok) {
+      throw new Error('TICKET_INVALIDATE_FAILED');
+    }
+  },
+
   assignTickets: async (ticketIds: number[], userGuid: string): Promise<void> => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

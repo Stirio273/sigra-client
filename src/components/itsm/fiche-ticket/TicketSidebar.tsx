@@ -1,4 +1,15 @@
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog"
+import { ticketService } from "@/services/ticket.service"
 import type { TicketMetadata } from "@/types/fiche-ticket"
 
 interface TicketSidebarProps {
@@ -19,6 +30,24 @@ function Field({ label, value, mono }: { label: string; value: string | null | n
 }
 
 function TicketSidebar({ ticket }: TicketSidebarProps) {
+  const [open, setOpen] = useState(false)
+  const [justificatif, setJustificatif] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    try {
+      await ticketService.invalidateTicket(ticket.idTicket, justificatif)
+      setOpen(false)
+      setJustificatif("")
+    } catch {
+      // handle error
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <aside className="w-full lg:w-80 space-y-4">
       <Card>
@@ -43,6 +72,44 @@ function TicketSidebar({ ticket }: TicketSidebarProps) {
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-xs">
           <span className="text-muted-foreground">Fermer le ticket</span>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger
+              render={
+                <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                  Invalider le ticket
+                </span>
+              }
+            />
+            <DialogContent className="w-full max-w-md">
+              <DialogTitle className="text-sm font-medium mb-2">
+                Invalider le ticket {ticket.numeroTicket}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mb-3">
+                Fournissez un justificatif pour cette invalidation.
+              </DialogDescription>
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <textarea
+                  value={justificatif}
+                  onChange={(e) => setJustificatif(e.target.value)}
+                  placeholder="Justificatif..."
+                  className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
+                  required
+                />
+                <div className="flex justify-end gap-2">
+                  <DialogClose
+                    render={
+                      <Button variant="outline" size="sm" type="button">
+                        Annuler
+                      </Button>
+                    }
+                  />
+                  <Button type="submit" size="sm" disabled={submitting}>
+                    {submitting ? "Envoi..." : "Soumettre"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
           <span className="text-muted-foreground">Réassigner</span>
           <span className="text-muted-foreground">Ajouter une note</span>
         </CardContent>

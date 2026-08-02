@@ -1,4 +1,5 @@
 import React from "react"
+import { Link } from "react-router-dom"
 import { LayoutDashboard, Users, BarChart3, Puzzle, Wrench, Search } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
@@ -10,19 +11,19 @@ function TopBar() {
       <div className="flex items-center gap-6">
         <div className="text-primary font-semibold">Tableau de bord</div>
         <nav className="text-sm flex gap-4">
-          <a className="flex items-center gap-1.5 hover:underline">
+          <Link to="/dashboard" className="flex items-center gap-1.5 hover:underline">
             <LayoutDashboard size={16} /> Tableau de bord
-          </a>
-          <a className="flex items-center gap-1.5 hover:underline">
+          </Link>
+          <a href="#" className="flex items-center gap-1.5 hover:underline">
             <Users size={16} /> Equipes
           </a>
-          <a className="flex items-center gap-1.5 hover:underline">
+          <a href="#" className="flex items-center gap-1.5 hover:underline">
             <BarChart3 size={16} /> Reports
           </a>
-          <a className="flex items-center gap-1.5 hover:underline">
+          <a href="#" className="flex items-center gap-1.5 hover:underline">
             <Puzzle size={16} /> Modules
           </a>
-          <a className="flex items-center gap-1.5 hover:underline">
+          <a href="#" className="flex items-center gap-1.5 hover:underline">
             <Wrench size={16} /> Outils
           </a>
         </nav>
