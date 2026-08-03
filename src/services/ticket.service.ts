@@ -1,4 +1,4 @@
-import type { PaginatedResponse, Ticket, TicketDetail } from '../types/ticket';
+import type { PaginatedResponse, Ticket, TicketDetail, Rejet } from '../types/ticket';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const MOCK_USER_EMAIL = import.meta.env.VITE_MOCK_USER_EMAIL;
@@ -63,7 +63,7 @@ export const ticketService = {
       method: 'POST',
       credentials: 'include',
       headers: buildHeaders(),
-      body: JSON.stringify({ idTicket, accept }),
+      body: JSON.stringify({ idTicket, decision: accept }),
     });
 
     if (!response.ok) {
@@ -71,8 +71,8 @@ export const ticketService = {
     }
   },
 
-  getRejet: async (idTicket: number): Promise<Record<string, unknown> | null> => {
-    const response = await fetch(`${API_URL}/tickets/${idTicket}/rejet`, {
+  getRejet: async (idTicket: number): Promise<Rejet | null> => {
+    const response = await fetch(`${API_URL}/tickets/${idTicket}/pending-reject`, {
       method: 'GET',
       credentials: 'include',
       headers: buildHeaders(),

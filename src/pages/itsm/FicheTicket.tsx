@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import { TriangleAlert } from "lucide-react"
 import { useParams } from "react-router-dom"
 import type { TicketMetadata, EmailMessage, Attachment } from "@/types/fiche-ticket"
-import type { TicketDetail } from "@/types/ticket"
+import type { TicketDetail, Rejet } from "@/types/ticket"
 import { ticketService } from "@/services/ticket.service"
 import TopBar from "@/components/itsm/TopBar"
 import { TicketHeader } from "@/components/itsm/fiche-ticket/TicketHeader"
@@ -10,6 +10,7 @@ import { TicketSidebar } from "@/components/itsm/fiche-ticket/TicketSidebar"
 import { EmailThread } from "@/components/itsm/fiche-ticket/EmailThread"
 import { AttachmentList } from "@/components/itsm/fiche-ticket/AttachmentList"
 import { Button } from "@/components/ui/button"
+import { AuthContext } from "@/context/AuthContext"
 
 function formatBytes(bytes: number) {
   if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(1)} MB`
@@ -71,6 +72,8 @@ function mapAttachment(source: TicketDetail["emailsSources"][number]["piecesJoin
 export default function FicheTicket() {
   const { id } = useParams<{ id: string }>()
   const ticketId = Number(id)
+  const authContext = useContext(AuthContext)
+  const isAdmin = authContext?.user?.role === "Administrateur"
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +81,7 @@ export default function FicheTicket() {
   const [emails, setEmails] = useState<EmailMessage[]>([])
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [detail, setDetail] = useState<TicketDetail | null>(null)
-  const [rejet, setRejet] = useState<Record<string, unknown> | null>(null)
+  const [rejet, setRejet] = useState<Rejet | null>(null)
   const [rejetAction, setRejetAction] = useState<"accept" | "refuse" | null>(null)
   const [rejetSubmitting, setRejetSubmitting] = useState(false)
 
@@ -118,9 +121,11 @@ export default function FicheTicket() {
         )
         setAttachments(mappedAttachments)
 
-        const rejetData = await ticketService.getRejet(ticketId)
-        if (!cancelled) {
-          setRejet(rejetData)
+        if (isAdmin) {
+          const rejetData = await ticketService.getRejet(ticketId)
+          if (!cancelled) {
+            setRejet(rejetData)
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -137,7 +142,7 @@ export default function FicheTicket() {
     return () => {
       cancelled = true
     }
-  }, [ticketId])
+  }, [ticketId, isAdmin])
 
    if (loading) {
      return (
@@ -169,7 +174,7 @@ export default function FicheTicket() {
      <div className="min-h-screen bg-background p-4 md:p-6">
        <div className="max-w-full mx-auto">
          <TopBar />
-          {rejet && (
+          {isAdmin && rejet && (
             <div className="border border-amber-200 bg-amber-50 p-4 mb-6">
               <div className="flex items-start gap-3">
                 <TriangleAlert className="mt-0.5 h-4 w-4 text-amber-600" />
@@ -177,12 +182,12 @@ export default function FicheTicket() {
                   <p className="text-sm font-medium text-amber-900">
                     Demande de rejet en attente de validation
                   </p>
-                  <p className="text-xs text-amber-700 mt-1">
-                    Proposée par un technicien · {new Date().toLocaleDateString("fr-FR")}
-                  </p>
-                  <p className="text-xs text-amber-800 mt-2 italic">
-                    {(rejet as Record<string, any>)?.justificatif ?? (rejet as Record<string, unknown>)?.motif ?? JSON.stringify(rejet)}
-                  </p>
+                   <p className="text-xs text-amber-700 mt-1">
+                     Proposée par {rejet.auteur.prenom} {rejet.auteur.nom} · {new Date(rejet.dateProposition).toLocaleDateString("fr-FR")}
+                   </p>
+                   <p className="text-xs text-amber-800 mt-2 italic">
+                     {rejet.justificatif}
+                   </p>
                   <div className="mt-3 flex items-center gap-2">
                     <Button
                       size="sm"

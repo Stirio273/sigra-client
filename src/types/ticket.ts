@@ -87,10 +87,28 @@ export type TicketDetail = Ticket & {
   idStatutNavigation?: TicketDetailNavigation;
   idTechnicienAssigneNavigation?: TicketDetailNavigation;
   emailsSources: TicketDetailEmailSource[];
-  commentaires: any[];
-  escalades: any[];
-  historiqueStatuts: any[];
-  notifications: any[];
-  reassignations: any[];
-  rejet: any | null;
+  commentaires: unknown[];
+  escalades: unknown[];
+  historiqueStatuts: unknown[];
+  notifications: unknown[];
+  reassignations: unknown[];
+  rejet: Rejet | null;
+};
+
+export type RejetAuteur = {
+  nom: string;
+  prenom: string;
+  email: string;
+  userGuid: string;
+};
+
+export type Rejet = {
+  rejetId: number;
+  ticketId: number;
+  auteur: RejetAuteur;
+  justificatif: string;
+  dateProposition: string;
+  idValidateur: number | null;
+  decision: boolean | null;
+  dateDecision: string | null;
 };
