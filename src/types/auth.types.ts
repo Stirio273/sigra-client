@@ -1,6 +1,7 @@
 // src/types/auth.types.ts
 
 export interface User {
+  userGuid: string;
   username: string;
   isAuthenticated: boolean;
   role: string;

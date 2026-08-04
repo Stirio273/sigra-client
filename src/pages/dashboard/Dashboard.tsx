@@ -65,7 +65,7 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, 
   onAssignSuccess?: (technicianId: number, technicianEmail: string, ticketIds: number[]) => void
 }) {
   const authContext = useContext(AuthContext)
-  const isAdmin = authContext?.user?.role == 'Administrateur'
+  const isAdmin = (authContext?.user?.role == 'Administrateur')
 
   const [technicians, setTechnicians] = useState<Technician[]>([])
   const [techLoading, setTechLoading] = useState(true)
@@ -328,11 +328,17 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchTickets = async (pageNumber: number = 1, pageSize: number = 20) => {
+  const authContext = useContext(AuthContext)
+  const isAdmin = (authContext?.user?.role == 'Administrateur')
+  const [filterMode, setFilterMode] = useState<'all' | 'mine'>(isAdmin ? 'all' : 'mine')
+
+  const fetchTickets = async (pageNumber: number = 1, pageSize: number = 20, overrideFilterMode?: string) => {
+    const currentFilter = overrideFilterMode ?? filterMode
+    const technicianEmail = currentFilter === 'mine' && authContext?.user?.userGuid ? authContext.user.userGuid : undefined
     try {
       setIsLoading(true)
       setError(null)
-      const result = await ticketService.getAll(pageNumber, pageSize)
+      const result = await ticketService.getAll(pageNumber, pageSize, technicianEmail)
       setData(result)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'TICKETS_FETCH_FAILED')
@@ -353,9 +359,13 @@ export default function Dashboard() {
           <div className="flex-1 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Tabs defaultValue="all">
+                <Tabs value={filterMode} onValueChange={(value) => {
+                  setFilterMode(value as 'all' | 'mine')
+                  fetchTickets(1, data?.pageSize ?? 20, value)
+                }}>
                   <TabsList>
                     <TabsTrigger value="all">Tous les tickets</TabsTrigger>
+                    <TabsTrigger value="mine">Mes tickets</TabsTrigger>
                   </TabsList>
                 </Tabs>
                 <Button variant="link" size="sm" className="h-auto p-0">Importer une demande</Button>

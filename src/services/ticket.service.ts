@@ -16,8 +16,13 @@ const buildHeaders = (): Record<string, string> => {
 };
 
 export const ticketService = {
-  getAll: async (pageNumber: number = 1, pageSize: number = 20): Promise<PaginatedResponse<Ticket>> => {
-    const response = await fetch(`${API_URL}/tickets?pageNumber=${pageNumber}&pageSize=${pageSize}`, {
+  getAll: async (pageNumber: number = 1, pageSize: number = 20, userGuid?: string): Promise<PaginatedResponse<Ticket>> => {
+    let url = `${API_URL}/tickets?pagination.pageNumber=${pageNumber}&pagination.pageSize=${pageSize}`;
+    if (userGuid) {
+      url += `&assignedTechnician=${encodeURIComponent(userGuid)}`;
+    }
+
+    const response = await fetch(url, {
       method: 'GET',
       credentials: 'include',
       headers: buildHeaders(),

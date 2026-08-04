@@ -23,9 +23,9 @@ function TopBar() {
           <a href="#" className="flex items-center gap-1.5 hover:underline">
             <Puzzle size={16} /> Modules
           </a>
-          <a href="#" className="flex items-center gap-1.5 hover:underline">
+          <Link to="/outils" className="flex items-center gap-1.5 hover:underline">
             <Wrench size={16} /> Outils
-          </a>
+          </Link>
         </nav>
       </div>
       <div className="flex items-center gap-4">
