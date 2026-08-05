@@ -10,6 +10,8 @@ export type TicketMetadata = {
   sla: number
   closedAt: string | null
   assignedTo: string | null
+  application: string
+  criticite: string
 }
 
 export type EmailMessage = {

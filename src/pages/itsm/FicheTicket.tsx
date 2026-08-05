@@ -38,6 +38,8 @@ function mapTicketMetadata(detail: TicketDetail): TicketMetadata {
     sla: detail.dureeSla,
     closedAt: detail.dateCloture,
     assignedTo: detail.idTechnicienAssigneNavigation?.email ?? null,
+    application: detail.idApplicationNavigation?.libelle ?? "Indéterminé",
+    criticite: detail.idCriticiteNavigation?.libelle ?? "Indéterminé",
   }
 }
 

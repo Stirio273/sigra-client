@@ -58,6 +58,8 @@ function TicketSidebar({ ticket }: TicketSidebarProps) {
           <Field label="N° Ticket" value={ticket.numeroTicket} mono />
           <Field label="Statut" value={ticket.status} />
           <Field label="Priorité" value={ticket.priority} />
+          <Field label="Application" value={ticket.application} />
+          <Field label="Criticité" value={ticket.criticite} />
           <Field label="Demandeur" value={ticket.requester} />
           <Field label="Direction" value={ticket.direction} />
           <Field label="Assigné à" value={ticket.assignedTo} />

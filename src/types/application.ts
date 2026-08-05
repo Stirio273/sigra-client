@@ -7,5 +7,13 @@ export type Application = {
 
 export type ClasseService = {
   idCs: number;
+  code: string;
+  libelle: string;
+  dureeSla: number;
+};
+
+export type JourFerie = {
+  idJourFerie: number;
+  date: string;
   libelle: string;
 };
