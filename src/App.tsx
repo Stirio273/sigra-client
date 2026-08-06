@@ -8,6 +8,7 @@ import ForbiddenPage from './components/auth/ForbiddenPage';
 import Dashboard from "@/pages/dashboard/Dashboard";
 import FicheTicket from "@/pages/itsm/FicheTicket";
 import Outils from "@/pages/itsm/Outils";
+import Reports from "@/pages/itsm/Reports";
 
 
 export function App() {
@@ -25,6 +26,7 @@ export function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/outils" element={<Outils />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="/tickets/:id" element={<FicheTicket />} />
           </Route>
 

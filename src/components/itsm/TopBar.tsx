@@ -17,9 +17,9 @@ function TopBar() {
           <a href="#" className="flex items-center gap-1.5 hover:underline">
             <Users size={16} /> Equipes
           </a>
-          <a href="#" className="flex items-center gap-1.5 hover:underline">
-            <BarChart3 size={16} /> Reports
-          </a>
+          <Link to="/reports" className="flex items-center gap-1.5 hover:underline">
+            <BarChart3 size={16} /> Rapports
+          </Link>
           <a href="#" className="flex items-center gap-1.5 hover:underline">
             <Puzzle size={16} /> Modules
           </a>
