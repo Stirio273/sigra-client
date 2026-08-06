@@ -232,7 +232,7 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, 
                 </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon-sm" render={<Link to={`/tickets/${t.id}`}></Link>}>
-                    <span className="text-muted-foreground"><FileText size={24}/></span>
+                    <span className="text-muted-foreground"><FileText size={24} /></span>
                   </Button>
                 </TableCell>
               </TableRow>
@@ -392,11 +392,11 @@ export default function Dashboard() {
                       items: prev.items.map(ticket =>
                         ticketIds.includes(ticket.idTicket)
                           ? {
-                              ...ticket,
-                              idTechnicienAssigne: technicianId,
-                              technicienAssigne: ticketIds.includes(ticket.idTicket) ? { email: technicianEmail } : ticket.technicienAssigne,
-                              statut: "En cours"
-                            }
+                            ...ticket,
+                            idTechnicienAssigne: technicianId,
+                            technicienAssigne: ticketIds.includes(ticket.idTicket) ? { email: technicianEmail } : ticket.technicienAssigne,
+                            statut: { libelle: "En cours" }
+                          }
                           : ticket
                       )
                     }
