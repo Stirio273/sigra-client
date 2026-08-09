@@ -101,6 +101,16 @@ export default function FicheTicket() {
     }
   }
 
+  const handleApplicationUpdated = async () => {
+    try {
+      const data = await ticketService.getById(ticketId)
+      setTicket(mapTicketMetadata(data))
+      setDetail(data)
+    } catch {
+      // handle error
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
 
@@ -217,7 +227,7 @@ export default function FicheTicket() {
              <EmailThread emails={emails} />
              <AttachmentList attachments={attachments} />
            </main>
-           <TicketSidebar ticket={ticket} />
+            <TicketSidebar ticket={ticket} onApplicationUpdated={handleApplicationUpdated} />
          </div>
        </div>
      </div>

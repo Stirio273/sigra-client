@@ -124,4 +124,17 @@ export const ticketService = {
       throw new Error('ASSIGN_TICKETS_FAILED');
     }
   },
+
+  updateTicketApplication: async (idTicket: number, idApplication: number): Promise<void> => {
+    const response = await fetch(`${API_URL}/tickets/${idTicket}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: buildHeaders(),
+      body: JSON.stringify({ idApplication }),
+    });
+
+    if (!response.ok) {
+      throw new Error('TICKET_APPLICATION_UPDATE_FAILED');
+    }
+  },
 };

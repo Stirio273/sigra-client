@@ -50,7 +50,7 @@ function mapTicket(t: Ticket): TicketRow {
     id: t.idTicket,
     numeroTicket: t.numeroTicket,
     subject: t.demandeurEmail,
-    assignedTo: t.technicienAssigne ? `${t.technicienAssigne.email}` : "Unassigned",
+    assignedTo: t.technicienAssigne ? `${t.technicienAssigne.email}` : "Non attribué",
     group: t.demandeurDirection || undefined,
     status: t.statut ? `${t.statut.libelle}` : "Nouveau",
   }

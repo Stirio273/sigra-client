@@ -9,6 +9,7 @@ import Dashboard from "@/pages/dashboard/Dashboard";
 import FicheTicket from "@/pages/itsm/FicheTicket";
 import Outils from "@/pages/itsm/Outils";
 import Reports from "@/pages/itsm/Reports";
+import Team from "@/pages/itsm/Team";
 
 
 export function App() {
@@ -27,6 +28,7 @@ export function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/outils" element={<Outils />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/team" element={<Team />} />
             <Route path="/tickets/:id" element={<FicheTicket />} />
           </Route>
 

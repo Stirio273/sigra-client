@@ -4,8 +4,13 @@ import { LayoutDashboard, Users, BarChart3, Puzzle, Wrench, Search } from "lucid
 
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useNotifications } from "@/hooks/useNotifications"
+import NotificationBell from "@/components/itsm/notifications/NotificationBell"
+import NotificationDropdown from "@/components/itsm/notifications/NotificationDropdown"
 
 function TopBar() {
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications()
+
   return (
     <div className="flex items-center justify-between border-b pb-4 mb-4">
       <div className="flex items-center gap-6">
@@ -14,9 +19,9 @@ function TopBar() {
           <Link to="/dashboard" className="flex items-center gap-1.5 hover:underline">
             <LayoutDashboard size={16} /> Tableau de bord
           </Link>
-          <a href="#" className="flex items-center gap-1.5 hover:underline">
+          <Link to="/team" className="flex items-center gap-1.5 hover:underline">
             <Users size={16} /> Equipes
-          </a>
+          </Link>
           <Link to="/reports" className="flex items-center gap-1.5 hover:underline">
             <BarChart3 size={16} /> Rapports
           </Link>
@@ -33,6 +38,14 @@ function TopBar() {
           <Search size={16} className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
           <Input placeholder="Rechercher une demande ID" className="pl-8 w-64" />
         </div>
+        <NotificationDropdown
+          notifications={notifications}
+          unreadCount={unreadCount}
+          isLoading={isLoading}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+          render={<NotificationBell unreadCount={unreadCount} onClick={() => {}} />}
+        />
         <Avatar>
           <AvatarFallback className="bg-muted text-muted-foreground">JD</AvatarFallback>
         </Avatar>
