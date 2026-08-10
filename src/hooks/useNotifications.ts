@@ -4,6 +4,7 @@ import { notificationService } from "@/services/notification.service";
 
 // const API_URL = import.meta.env.VITE_API_URL;
 const HUB_URL = import.meta.env.VITE_HUB_URL;
+const MOCK_USER_EMAIL = import.meta.env.VITE_MOCK_USER_EMAIL;
 
 export function useNotifications() {
   const [state, setState] = useState<NotificationsState>(() => ({
@@ -57,11 +58,18 @@ export function useNotifications() {
 
       try {
         const module = await import("@microsoft/signalr");
-        const { HubConnectionBuilder, LogLevel } = module;
+        const { HubConnectionBuilder, HttpTransportType, LogLevel } = module;
 
         const connection = new HubConnectionBuilder()
           .withUrl(`${HUB_URL}`, {
             withCredentials: true,
+            headers: {
+              "X-Mock-User": MOCK_USER_EMAIL
+            },
+
+            // forcer un transport qui garantit
+            // l'envoi du header sur CHAQUE requête HTTP
+            transport: HttpTransportType.LongPolling
           })
           .configureLogging(LogLevel.Information)
           .build();
