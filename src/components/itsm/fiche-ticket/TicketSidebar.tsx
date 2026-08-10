@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogTrigger,
@@ -23,6 +24,8 @@ import type { TicketMetadata } from "@/types/fiche-ticket"
 import type { Technician } from "@/types/technician"
 import { AuthContext } from "@/context/AuthContext"
 import type { Application } from "@/types/application"
+import type { EntiteExterne } from "@/types/entiteexterne"
+import { entiteExterneService } from "@/services/entiteexterne.service"
 
 interface TicketSidebarProps {
   ticket: TicketMetadata
@@ -59,6 +62,13 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
   const [applications, setApplications] = useState<Application[]>([])
   const [selectedApplication, setSelectedApplication] = useState<number | null>(null)
   const [appSubmitting, setAppSubmitting] = useState(false)
+
+  const [transferOpen, setTransferOpen] = useState(false)
+  const [entitesExternes, setEntitesExternes] = useState<EntiteExterne[]>([])
+  const [selectedEntiteExterne, setSelectedEntiteExterne] = useState<number | null>(null)
+  const [explication, setExplication] = useState("")
+  const [estDefinitif, setEstDefinitif] = useState(false)
+  const [transferSubmitting, setTransferSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -114,6 +124,23 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
     }
   }, [appOpen, ticket.application])
 
+  useEffect(() => {
+    if (!transferOpen) return
+
+    let cancelled = false
+    entiteExterneService.getAll()
+      .then((data) => {
+        if (!cancelled) setEntitesExternes(data)
+      })
+      .catch(() => {
+        if (!cancelled) setEntitesExternes([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [transferOpen])
+
   const handleAssign = async () => {
     if (!isAdmin && !currentUserGuid) return
     if (isAdmin && !selectedTechnician) return
@@ -144,6 +171,27 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
     }
   }
 
+  const handleTransfer = async () => {
+    if (selectedEntiteExterne === null) return
+
+    setTransferSubmitting(true)
+    try {
+      await ticketService.transferTicket(ticket.idTicket, {
+        identiteexterne: selectedEntiteExterne,
+        explication,
+        estDefinitif,
+      })
+      setTransferOpen(false)
+      setSelectedEntiteExterne(null)
+      setExplication("")
+      setEstDefinitif(false)
+    } catch {
+      // handle error
+    } finally {
+      setTransferSubmitting(false)
+    }
+  }
+
   return (
     <aside className="w-full lg:w-80 space-y-4">
       <Card>
@@ -160,7 +208,7 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
           <Field label="Direction" value={ticket.direction} />
           <Field label="Assigné à" value={ticket.assignedTo} />
           <Field label="Date création" value={ticket.createdAt} />
-          <Field label="SLA (min)" value={ticket.sla} />
+          <Field label="SLA (heures)" value={ticket.sla} />
           <Field label="Date clôture" value={ticket.closedAt ?? "—"} />
         </CardContent>
       </Card>
@@ -254,6 +302,74 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
                   />
                   <Button size="sm" onClick={handleApplicationUpdate} disabled={appSubmitting || selectedApplication === null}>
                     {appSubmitting ? "Envoi..." : "Enregistrer"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+            <DialogTrigger
+              render={
+                <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                  Transférer le ticket
+                </span>
+              }
+            />
+            <DialogContent className="w-full max-w-md">
+              <DialogTitle className="text-sm font-medium mb-2">
+                Transférer le ticket
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mb-3">
+                Sélectionnez une entité externe et fournissez une explication.
+              </DialogDescription>
+              <div className="space-y-3">
+                <Select
+                  value={selectedEntiteExterne !== null ? String(selectedEntiteExterne) : ""}
+                  onValueChange={(value) => setSelectedEntiteExterne(Number(value))}
+                >
+                  <SelectTrigger size="sm" className="w-full">
+                    <SelectValue placeholder="Sélectionner une entité externe">
+                      {(value) => {
+                        const entite = entitesExternes.find((e) => String(e.idEntiteExterne) === value)
+                        return entite ? entite.nom : "Sélectionner une entité externe"
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {entitesExternes.map((entite) => (
+                      <SelectItem key={entite.idEntiteExterne} value={String(entite.idEntiteExterne)}>
+                        {entite.nom}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <textarea
+                  value={explication}
+                  onChange={(e) => setExplication(e.target.value)}
+                  placeholder="Explication..."
+                  className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
+                  required
+                />
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="est-definitif"
+                    checked={estDefinitif}
+                    onCheckedChange={(checked) => setEstDefinitif(checked === true)}
+                  />
+                  <label htmlFor="est-definitif" className="text-xs text-foreground cursor-pointer">
+                    Est définitif
+                  </label>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <DialogClose
+                    render={
+                      <Button variant="outline" size="sm" type="button">
+                        Annuler
+                      </Button>
+                    }
+                  />
+                  <Button size="sm" onClick={handleTransfer} disabled={transferSubmitting || selectedEntiteExterne === null}>
+                    {transferSubmitting ? "Envoi..." : "Transférer"}
                   </Button>
                 </div>
               </div>

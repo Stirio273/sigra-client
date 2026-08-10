@@ -1,4 +1,5 @@
 import type { PaginatedResponse, Ticket, TicketDetail, Rejet } from '../types/ticket';
+import type { EntiteExterne } from '../types/entiteexterne';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const MOCK_USER_EMAIL = import.meta.env.VITE_MOCK_USER_EMAIL;
@@ -135,6 +136,19 @@ export const ticketService = {
 
     if (!response.ok) {
       throw new Error('TICKET_APPLICATION_UPDATE_FAILED');
+    }
+  },
+
+  transferTicket: async (idTicket: number, data: { identiteexterne: number; explication: string; estDefinitif: boolean }): Promise<void> => {
+    const response = await fetch(`${API_URL}/tickets/${idTicket}/transfer`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: buildHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error('TICKET_TRANSFER_FAILED');
     }
   },
 };

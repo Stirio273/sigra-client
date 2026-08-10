@@ -1,4 +1,4 @@
-import type { Application, ClasseService, JourFerie } from "../types/application";
+import type { Application, ClasseService, Criticite, JourFerie } from "../types/application";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const MOCK_USER_EMAIL = import.meta.env.VITE_MOCK_USER_EMAIL;
@@ -139,6 +139,7 @@ export const classeServiceService = {
     code: string;
     libelle: string;
     dureeSla: number;
+    idcriticite: number;
   }): Promise<ClasseService> => {
     const response = await fetch(`${API_URL}/classes-services`, {
       method: "POST",
@@ -160,6 +161,7 @@ export const classeServiceService = {
       code: string;
       libelle: string;
       dureeSla: number;
+      idcriticite: number;
     }
   ): Promise<void> => {
     const response = await fetch(`${API_URL}/classes-services/${idCs}`, {
@@ -172,8 +174,6 @@ export const classeServiceService = {
     if (!response.ok) {
       throw new Error("CLASSE_SERVICE_UPDATE_FAILED");
     }
-
-    // return response.json();
   },
 
   delete: async (idCs: number): Promise<void> => {
@@ -186,6 +186,26 @@ export const classeServiceService = {
     if (!response.ok) {
       throw new Error("CLASSE_SERVICE_DELETE_FAILED");
     }
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/*  Criticités                                                        */
+/* ------------------------------------------------------------------ */
+
+export const criticiteService = {
+  getAll: async (): Promise<Criticite[]> => {
+    const response = await fetch(`${API_URL}/criticites`, {
+      method: "GET",
+      credentials: "include",
+      headers: buildHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error("CRITICITES_FETCH_FAILED");
+    }
+
+    return response.json();
   },
 };
 

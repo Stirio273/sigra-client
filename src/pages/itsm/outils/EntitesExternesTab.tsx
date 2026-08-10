@@ -19,35 +19,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { classeServiceService, criticiteService } from "@/services/application.service";
-import type { ClasseService, Criticite } from "@/types/application";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { entiteExterneService } from "@/services/entiteexterne.service";
+import type { EntiteExterne } from "@/types/entiteexterne";
 
 type FormState = {
-  code: string;
-  libelle: string;
-  dureeSla: number;
-  idcriticite: number;
+  nom: string;
+  actif: boolean;
 };
 
 const emptyForm: FormState = {
-  code: "",
-  libelle: "",
-  dureeSla: 0,
-  idcriticite: 0,
+  nom: "",
+  actif: true,
 };
 
-export default function ClassesServiceTab() {
-  const [classes, setClasses] = useState<ClasseService[]>([]);
-  const [criticites, setCriticites] = useState<Criticite[]>([]);
+export default function EntitesExternesTab() {
+  const [entites, setEntites] = useState<EntiteExterne[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,19 +47,15 @@ export default function ClassesServiceTab() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [deleteTarget, setDeleteTarget] = useState<ClasseService | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<EntiteExterne | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const [classesData, criticitesData] = await Promise.all([
-        classeServiceService.getAll(),
-        criticiteService.getAll(),
-      ]);
-      setClasses(classesData);
-      setCriticites(criticitesData);
+      const data = await entiteExterneService.getAll();
+      setEntites(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "LOAD_FAILED");
     } finally {
@@ -88,13 +74,11 @@ export default function ClassesServiceTab() {
     setFormOpen(true);
   };
 
-  const openEdit = (cls: ClasseService) => {
-    setEditingId(cls.idCs);
+  const openEdit = (entite: EntiteExterne) => {
+    setEditingId(entite.idEntiteExterne);
     setForm({
-      code: cls.code,
-      libelle: cls.libelle,
-      dureeSla: cls.dureeSla,
-      idcriticite: cls.criticite.idCriticite,
+      nom: entite.nom,
+      actif: entite.actif,
     });
     setSubmitError(null);
     setFormOpen(true);
@@ -104,36 +88,22 @@ export default function ClassesServiceTab() {
     e.preventDefault();
     setSubmitError(null);
 
-    if (!form.code.trim()) {
-      setSubmitError("Le code est requis.");
-      return;
-    }
-
-    if (!form.libelle.trim()) {
-      setSubmitError("Le libellé est requis.");
-      return;
-    }
-
-    if (!form.idcriticite) {
-      setSubmitError("Veuillez sélectionner une criticité.");
+    if (!form.nom.trim()) {
+      setSubmitError("Le nom est requis.");
       return;
     }
 
     try {
       setSubmitting(true);
       if (editingId) {
-        await classeServiceService.update(editingId, {
-          code: form.code.trim(),
-          libelle: form.libelle.trim(),
-          dureeSla: form.dureeSla,
-          idcriticite: form.idcriticite,
+        await entiteExterneService.update(editingId, {
+          nom: form.nom.trim(),
+          actif: form.actif,
         });
       } else {
-        await classeServiceService.create({
-          code: form.code.trim(),
-          libelle: form.libelle.trim(),
-          dureeSla: form.dureeSla,
-          idcriticite: form.idcriticite,
+        await entiteExterneService.create({
+          nom: form.nom.trim(),
+          actif: form.actif,
         });
       }
       setFormOpen(false);
@@ -149,7 +119,7 @@ export default function ClassesServiceTab() {
     if (!deleteTarget) return;
     try {
       setDeleting(true);
-      await classeServiceService.delete(deleteTarget.idCs);
+      await entiteExterneService.delete(deleteTarget.idEntiteExterne);
       setDeleteTarget(null);
       await loadData();
     } catch (err) {
@@ -160,18 +130,13 @@ export default function ClassesServiceTab() {
     }
   };
 
-  const criticiteLabel = (idcriticite: number) => {
-    const c = criticites.find((c) => c.idCriticite === idcriticite);
-    return c?.libelle ?? `#${idcriticite}`;
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium">Classes de service</h2>
+        <h2 className="text-lg font-medium">Entités externes</h2>
         <Button onClick={openCreate}>
           <Plus size={16} className="mr-2" />
-          Ajouter une classe
+          Ajouter une entité
         </Button>
       </div>
 
@@ -182,7 +147,7 @@ export default function ClassesServiceTab() {
       ) : loading ? (
         <Card>
           <CardContent className="p-6 text-sm text-muted-foreground">
-            Chargement des classes de service...
+            Chargement des entités externes...
           </CardContent>
         </Card>
       ) : (
@@ -191,43 +156,43 @@ export default function ClassesServiceTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Libellé</TableHead>
-                  <TableHead>Durée SLA (min)</TableHead>
-                  <TableHead>Criticité</TableHead>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Statut</TableHead>
                   <TableHead className="w-28 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {classes.length === 0 ? (
+                {entites.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={3}
                       className="text-center text-sm text-muted-foreground"
                     >
-                      Aucune classe de service trouvée.
+                      Aucune entité externe trouvée.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  classes.map((cls) => (
-                    <TableRow key={cls.idCs} className="hover:bg-muted/50">
-                      <TableCell className="text-sm">{cls.code}</TableCell>
-                      <TableCell className="text-sm">{cls.libelle}</TableCell>
-                      <TableCell className="text-sm">{cls.dureeSla}</TableCell>
-                      <TableCell className="text-sm">{cls.criticite.libelle}</TableCell>
+                  entites.map((entite) => (
+                    <TableRow key={entite.idEntiteExterne} className="hover:bg-muted/50">
+                      <TableCell className="text-sm">{entite.nom}</TableCell>
+                      <TableCell>
+                        <Badge variant={entite.actif ? "default" : "secondary"}>
+                          {entite.actif ? "Actif" : "Inactif"}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            onClick={() => openEdit(cls)}
+                            onClick={() => openEdit(entite)}
                           >
                             <Pencil size={14} />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            onClick={() => setDeleteTarget(cls)}
+                            onClick={() => setDeleteTarget(entite)}
                           >
                             <Trash2 size={14} />
                           </Button>
@@ -249,79 +214,41 @@ export default function ClassesServiceTab() {
           <DialogHeader>
             <DialogTitle>
               {editingId
-                ? "Modifier la classe de service"
-                : "Nouvelle classe de service"}
+                ? "Modifier l'entité externe"
+                : "Nouvelle entité externe"}
             </DialogTitle>
             <DialogDescription>
               {editingId
-                ? "Mettez à jour les informations de la classe de service."
-                : "Renseignez les informations de la nouvelle classe de service."}
+                ? "Mettez à jour les informations de l'entité externe."
+                : "Renseignez les informations de la nouvelle entité externe."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="code">Code</Label>
+              <Label htmlFor="libelle">Nom</Label>
               <Input
-                id="code"
-                value={form.code}
+                id="nom"
+                value={form.nom}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, code: e.target.value }))
+                  setForm((f) => ({ ...f, nom: e.target.value }))
                 }
-                placeholder="Ex: SUPPORT"
+                placeholder="Ex: Partenaire A"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="libelle">Libellé</Label>
-              <Input
-                id="libelle"
-                value={form.libelle}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, libelle: e.target.value }))
-                }
-                placeholder="Ex: Support"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="duree-sla">Durée SLA (minutes)</Label>
-              <Input
-                id="duree-sla"
-                type="number"
-                value={form.dureeSla}
-                onChange={(e) =>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="actif"
+                checked={form.actif}
+                onCheckedChange={(checked) =>
                   setForm((f) => ({
                     ...f,
-                    dureeSla: Number(e.target.value),
+                    actif: checked === true,
                   }))
                 }
-                placeholder="Ex: 60"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="criticite">Criticité</Label>
-              <Select
-                value={form.idcriticite ? String(form.idcriticite) : undefined}
-                onValueChange={(value) =>
-                  setForm((f) => ({
-                    ...f,
-                    idcriticite: Number(value),
-                  }))
-                }
-              >
-                <SelectTrigger id="criticite">
-                  {form.idcriticite ? (
-                    <span>{criticiteLabel(form.idcriticite)}</span>
-                  ) : (
-                    <SelectValue placeholder="Sélectionner une criticité" />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  {criticites.map((c) => (
-                    <SelectItem key={c.idCriticite} value={String(c.idCriticite)}>
-                      {c.libelle}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="actif" className="text-sm">
+                Actif
+              </Label>
             </div>
             {submitError && (
               <p className="text-xs text-red-600">{submitError}</p>
@@ -353,9 +280,9 @@ export default function ClassesServiceTab() {
         <DialogTrigger render={<span />} />
         <DialogContent className="w-full max-w-sm">
           <DialogHeader>
-            <DialogTitle>Supprimer la classe de service</DialogTitle>
+            <DialogTitle>Supprimer l'entité externe</DialogTitle>
             <DialogDescription>
-              Êtes-vous sûr de vouloir supprimer "{deleteTarget?.libelle}" ? Cette
+              Êtes-vous sûr de vouloir supprimer "{deleteTarget?.nom}" ? Cette
               action est irréversible.
             </DialogDescription>
           </DialogHeader>

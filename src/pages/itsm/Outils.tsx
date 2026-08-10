@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ApplicationsTab from "@/pages/itsm/outils/ApplicationsTab";
 import ClassesServiceTab from "@/pages/itsm/outils/ClassesServiceTab";
 import JourFeriesTab from "@/pages/itsm/outils/JourFeriesTab";
+import EntitesExternesTab from "@/pages/itsm/outils/EntitesExternesTab";
 import TopBar from "@/components/itsm/TopBar";
 
 export default function Outils() {
@@ -24,6 +25,9 @@ export default function Outils() {
                 Classes de service
               </TabsTrigger>
               <TabsTrigger value="jours-feries">Jours fériés</TabsTrigger>
+              <TabsTrigger value="entites-externes">
+                Entités externes
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="applications" className="mt-4">
               <ApplicationsTab />
@@ -33,6 +37,9 @@ export default function Outils() {
             </TabsContent>
             <TabsContent value="jours-feries" className="mt-4">
               <JourFeriesTab />
+            </TabsContent>
+            <TabsContent value="entites-externes" className="mt-4">
+              <EntitesExternesTab />
             </TabsContent>
           </Tabs>
         </div>

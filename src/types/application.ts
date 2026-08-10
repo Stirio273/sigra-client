@@ -10,6 +10,12 @@ export type ClasseService = {
   code: string;
   libelle: string;
   dureeSla: number;
+  criticite: Criticite;
+};
+
+export type Criticite = {
+  idCriticite: number;
+  libelle: string;
 };
 
 export type JourFerie = {
