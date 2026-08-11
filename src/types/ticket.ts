@@ -15,6 +15,7 @@ export type Ticket = {
   demandeurDirection: string;
   dateCloture: string | null;
   dureeSla: number;
+  deadlineResolution: string | null;
 };
 
 /** Paginated API response shape. */
@@ -82,10 +83,10 @@ export type TicketDetailAttachment = {
 };
 
 export type TicketDetail = Ticket & {
-  idApplicationNavigation?: TicketDetailNavigation;
-  idCriticiteNavigation?: TicketDetailNavigation;
-  idStatutNavigation?: TicketDetailNavigation;
-  idTechnicienAssigneNavigation?: TicketDetailNavigation;
+  application?: TicketDetailNavigation;
+  criticite?: TicketDetailNavigation;
+  statut?: TicketDetailNavigation;
+  technicienAssigne?: TicketDetailNavigation;
   emailsSources: TicketDetailEmailSource[];
   commentaires: unknown[];
   escalades: unknown[];

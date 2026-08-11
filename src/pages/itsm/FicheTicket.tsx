@@ -30,23 +30,24 @@ function mapTicketMetadata(detail: TicketDetail): TicketMetadata {
     idTicket: detail.idTicket,
     numeroTicket: detail.numeroTicket,
     subject: detail.emailsSources?.[0]?.objet ?? detail.numeroTicket,
-    status: detail.idStatutNavigation?.libelle ?? "Nouveau",
-    priority: detail.idCriticiteNavigation?.libelle ?? "Moyenne",
+    status: detail.statut?.libelle ?? "Nouveau",
+    priority: detail.criticite?.libelle ?? "Moyenne",
     createdAt: detail.dateCreation,
     requester: detail.demandeurEmail,
     direction: detail.demandeurDirection,
     sla: detail.dureeSla,
+    deadlineResolution: detail.deadlineResolution,
     closedAt: detail.dateCloture,
-    assignedTo: detail.idTechnicienAssigneNavigation?.email ?? null,
-    application: detail.idApplicationNavigation?.libelle ?? "Indéterminé",
-    criticite: detail.idCriticiteNavigation?.libelle ?? "Indéterminé",
+    assignedTo: detail.technicienAssigne?.email ?? null,
+    application: detail.application?.libelle ?? "Indéterminé",
+    criticite: detail.criticite?.libelle ?? "Indéterminé",
   }
 }
 
 function mapEmailMessage(detail: TicketDetail, source: TicketDetail["emailsSources"][number]): EmailMessage {
   const isRequester = source.expediteur === detail.demandeurEmail
   const to = isRequester
-    ? detail.idTechnicienAssigneNavigation?.email ?? "support@entreprise.fr"
+    ? detail.technicienAssigne?.email ?? "support@entreprise.fr"
     : detail.demandeurEmail
 
   return {
@@ -156,80 +157,80 @@ export default function FicheTicket() {
     }
   }, [ticketId, isAdmin])
 
-   if (loading) {
-     return (
-       <div className="min-h-screen bg-background p-4 md:p-6">
-         <div className="max-w-full mx-auto">
-           <TopBar />
-           <div className="mt-6 text-xs text-muted-foreground">
-             Chargement du ticket...
-           </div>
-         </div>
-       </div>
-     )
-   }
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-4 md:p-6">
+        <div className="max-w-full mx-auto">
+          <TopBar />
+          <div className="mt-6 text-xs text-muted-foreground">
+            Chargement du ticket...
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-   if (error || !ticket) {
-     return (
-       <div className="min-h-screen bg-background p-4 md:p-6">
-         <div className="max-w-full mx-auto">
-           <TopBar />
-           <div className="mt-6 text-xs text-red-600">
-             {error || "Ticket introuvable"}
-           </div>
-         </div>
-       </div>
-     )
-   }
+  if (error || !ticket) {
+    return (
+      <div className="min-h-screen bg-background p-4 md:p-6">
+        <div className="max-w-full mx-auto">
+          <TopBar />
+          <div className="mt-6 text-xs text-red-600">
+            {error || "Ticket introuvable"}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-   return (
-     <div className="min-h-screen bg-background p-4 md:p-6">
-       <div className="max-w-full mx-auto">
-         <TopBar />
-          {isAdmin && rejet && (
-            <div className="border border-amber-200 bg-amber-50 p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <TriangleAlert className="mt-0.5 h-4 w-4 text-amber-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-900">
-                    Demande de rejet en attente de validation
-                  </p>
-                   <p className="text-xs text-amber-700 mt-1">
-                     Proposée par {rejet.auteur.prenom} {rejet.auteur.nom} · {new Date(rejet.dateProposition).toLocaleDateString("fr-FR")}
-                   </p>
-                   <p className="text-xs text-amber-800 mt-2 italic">
-                     {rejet.justificatif}
-                   </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleRejetResponse(true)}
-                      disabled={rejetSubmitting}
-                    >
-                      {rejetAction === "accept" && rejetSubmitting ? "Validation..." : "Valider le rejet"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRejetResponse(false)}
-                      disabled={rejetSubmitting}
-                    >
-                      {rejetAction === "refuse" && rejetSubmitting ? "Refus..." : "Refuser"}
-                    </Button>
-                  </div>
+  return (
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-full mx-auto">
+        <TopBar />
+        {isAdmin && rejet && (
+          <div className="border border-amber-200 bg-amber-50 p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <TriangleAlert className="mt-0.5 h-4 w-4 text-amber-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-900">
+                  Demande de rejet en attente de validation
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Proposée par {rejet.auteur.prenom} {rejet.auteur.nom} · {new Date(rejet.dateProposition).toLocaleDateString("fr-FR")}
+                </p>
+                <p className="text-xs text-amber-800 mt-2 italic">
+                  {rejet.justificatif}
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleRejetResponse(true)}
+                    disabled={rejetSubmitting}
+                  >
+                    {rejetAction === "accept" && rejetSubmitting ? "Validation..." : "Valider le rejet"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRejetResponse(false)}
+                    disabled={rejetSubmitting}
+                  >
+                    {rejetAction === "refuse" && rejetSubmitting ? "Refus..." : "Refuser"}
+                  </Button>
                 </div>
               </div>
             </div>
-          )}
-         <div className="flex flex-col lg:flex-row gap-6">
-           <main className="flex-1 space-y-6 min-w-0">
-             <TicketHeader ticket={ticket} />
-             <EmailThread emails={emails} />
-             <AttachmentList attachments={attachments} />
-           </main>
-            <TicketSidebar ticket={ticket} onApplicationUpdated={handleApplicationUpdated} />
-         </div>
-       </div>
-     </div>
-   )
+          </div>
+        )}
+        <div className="flex flex-col lg:flex-row gap-6">
+          <main className="flex-1 space-y-6 min-w-0">
+            <TicketHeader ticket={ticket} />
+            <EmailThread emails={emails} />
+            <AttachmentList attachments={attachments} />
+          </main>
+          <TicketSidebar ticket={ticket} onApplicationUpdated={handleApplicationUpdated} />
+        </div>
+      </div>
+    </div>
+  )
 }

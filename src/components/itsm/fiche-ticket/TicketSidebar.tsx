@@ -209,6 +209,7 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
           <Field label="Assigné à" value={ticket.assignedTo} />
           <Field label="Date création" value={ticket.createdAt} />
           <Field label="SLA (heures)" value={ticket.sla} />
+          <Field label="Deadline résolution" value={ticket.deadlineResolution ?? "—"} />
           <Field label="Date clôture" value={ticket.closedAt ?? "—"} />
         </CardContent>
       </Card>
@@ -276,14 +277,14 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
                   value={selectedApplication !== null ? String(selectedApplication) : ""}
                   onValueChange={(value) => setSelectedApplication(Number(value))}
                 >
-                <SelectTrigger size="sm" className="w-full">
-                  <SelectValue placeholder="Sélectionner une application">
-                    {(value) => {
-                      const app = applications.find((a) => String(a.idApplication) === value)
-                      return app ? app.libelle : "Sélectionner une application"
-                    }}
-                  </SelectValue>
-                </SelectTrigger>
+                  <SelectTrigger size="sm" className="w-full">
+                    <SelectValue placeholder="Sélectionner une application">
+                      {(value) => {
+                        const app = applications.find((a) => String(a.idApplication) === value)
+                        return app ? app.libelle : "Sélectionner une application"
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     {applications.map((app) => (
                       <SelectItem key={app.idApplication} value={String(app.idApplication)}>

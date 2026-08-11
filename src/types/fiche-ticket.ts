@@ -8,6 +8,7 @@ export type TicketMetadata = {
   requester: string
   direction: string
   sla: number
+  deadlineResolution: string | null
   closedAt: string | null
   assignedTo: string | null
   application: string
