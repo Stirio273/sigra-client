@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react"
+import { useEffect, useState, useContext } from "react"
 import { Link } from "react-router-dom"
 import { FileText, Plus, Settings2, UserCheck, UserPlus } from "lucide-react"
 
@@ -29,12 +29,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { ticketService } from "@/services/ticket.service"
+import { ticketService, type TicketFilterValues } from "@/services/ticket.service"
 import { technicianService } from "@/services/technician.service"
 import type { PaginatedResponse, Ticket } from "@/types/ticket"
 import type { Technician } from "@/types/technician"
 import TopBar from "@/components/itsm/TopBar"
 import { AuthContext } from "@/context/AuthContext"
+import { TicketFilter } from "@/components/itsm/TicketFilter"
 
 type TicketRow = {
   id: number
@@ -231,7 +232,7 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, 
                   <Badge variant="outline">{t.status}</Badge>
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon-sm" render={<Link to={`/tickets/${t.id}`}></Link>}>
+                  <Button variant="ghost" size="icon-sm" render={<Link to={`/tickets/${t.id}`}></Link>} nativeButton={false}>
                     <span className="text-muted-foreground"><FileText size={24} /></span>
                   </Button>
                 </TableCell>
@@ -325,25 +326,26 @@ function RightPanel() {
 
 export default function Dashboard() {
   const [data, setData] = useState<PaginatedResponse<Ticket> | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [filters, setFilters] = useState<TicketFilterValues>({})
 
   const authContext = useContext(AuthContext)
   const isAdmin = (authContext?.user?.role == 'Administrateur')
   const [filterMode, setFilterMode] = useState<'all' | 'mine'>(isAdmin ? 'all' : 'mine')
 
-  const fetchTickets = async (pageNumber: number = 1, pageSize: number = 20, overrideFilterMode?: string) => {
+  const fetchTickets = async (pageNumber: number = 1, pageSize: number = 20, overrideFilterMode?: string, overrideFilters?: TicketFilterValues) => {
     const currentFilter = overrideFilterMode ?? filterMode
     const technicianEmail = currentFilter === 'mine' && authContext?.user?.userGuid ? authContext.user.userGuid : undefined
     try {
-      setIsLoading(true)
       setError(null)
-      const result = await ticketService.getAll(pageNumber, pageSize, technicianEmail)
+      const activeFilters = overrideFilters ?? filters
+      const result = await ticketService.getAll(pageNumber, pageSize, {
+        userGuid: technicianEmail,
+        ...activeFilters
+      })
       setData(result)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'TICKETS_FETCH_FAILED')
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -378,31 +380,37 @@ export default function Dashboard() {
                 <CardContent className="p-6 text-sm text-red-600">Failed to load tickets: {error}</CardContent>
               </Card>
             ) : (
-              <TicketTable
-                tickets={data ? data.items.map(mapTicket) : []}
-                pageNumber={data?.pageNumber ?? 1}
-                pageSize={data?.pageSize ?? 20}
-                totalCount={data?.totalCount ?? 0}
-                onPageChange={(page) => fetchTickets(page, data?.pageSize ?? 20)}
-                onAssignSuccess={(technicianId, technicianEmail, ticketIds) => {
-                  setData(prev => {
-                    if (!prev) return prev
-                    return {
-                      ...prev,
-                      items: prev.items.map(ticket =>
-                        ticketIds.includes(ticket.idTicket)
-                          ? {
-                            ...ticket,
-                            idTechnicienAssigne: technicianId,
-                            technicienAssigne: ticketIds.includes(ticket.idTicket) ? { email: technicianEmail } : ticket.technicienAssigne,
-                            statut: { libelle: "En cours" }
-                          }
-                          : ticket
-                      )
-                    }
-                  })
-                }}
-              />
+              <>
+                <TicketFilter onFilterChange={(newFilters) => {
+                  setFilters(newFilters)
+                  fetchTickets(1, data?.pageSize ?? 20, undefined, newFilters)
+                }} />
+                <TicketTable
+                  tickets={data ? data.items.map(mapTicket) : []}
+                  pageNumber={data?.pageNumber ?? 1}
+                  pageSize={data?.pageSize ?? 20}
+                  totalCount={data?.totalCount ?? 0}
+                  onPageChange={(page) => fetchTickets(page, data?.pageSize ?? 20)}
+                  onAssignSuccess={(technicianId, technicianEmail, ticketIds) => {
+                    setData(prev => {
+                      if (!prev) return prev
+                      return {
+                        ...prev,
+                        items: prev.items.map(ticket =>
+                          ticketIds.includes(ticket.idTicket)
+                            ? {
+                              ...ticket,
+                              idTechnicienAssigne: technicianId,
+                              technicienAssigne: ticketIds.includes(ticket.idTicket) ? { email: technicianEmail } : ticket.technicienAssigne,
+                              statut: { libelle: "En cours" }
+                            }
+                            : ticket
+                        )
+                      }
+                    })
+                  }}
+                />
+              </>
             )}
           </div>
           <RightPanel />

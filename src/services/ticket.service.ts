@@ -16,11 +16,52 @@ const buildHeaders = (): Record<string, string> => {
   return headers;
 };
 
+export type TicketFilterValues = {
+  userGuid?: string
+  status?: string
+  criticite?: number
+  applicationName?: number
+  assignedTechnician?: string
+  createdFrom?: string
+  createdTo?: string
+}
+
 export const ticketService = {
-  getAll: async (pageNumber: number = 1, pageSize: number = 20, userGuid?: string): Promise<PaginatedResponse<Ticket>> => {
-    let url = `${API_URL}/tickets?pagination.pageNumber=${pageNumber}&pagination.pageSize=${pageSize}`;
-    if (userGuid) {
-      url += `&assignedTechnician=${encodeURIComponent(userGuid)}`;
+  getAll: async (
+    pageNumber: number = 1,
+    pageSize: number = 20,
+    optionsOrUserGuid?: string | TicketFilterValues
+  ): Promise<PaginatedResponse<Ticket>> => {
+    let url = `${API_URL}/tickets?pagination.pageNumber=${pageNumber}&pagination.pageSize=${pageSize}`
+
+    let options: TicketFilterValues = {}
+
+    if (typeof optionsOrUserGuid === 'string') {
+      options.userGuid = optionsOrUserGuid
+    } else if (optionsOrUserGuid) {
+      options = optionsOrUserGuid
+    }
+
+    if (options.userGuid) {
+      url += `&assignedTechnician=${encodeURIComponent(options.userGuid)}`
+    }
+    if (options.status) {
+      url += `&status=${encodeURIComponent(options.status)}`
+    }
+    if (options.criticite !== undefined) {
+      url += `&criticite=${encodeURIComponent(options.criticite.toString())}`
+    }
+    if (options.applicationName !== undefined) {
+      url += `&applicationName=${encodeURIComponent(options.applicationName.toString())}`
+    }
+    if (options.assignedTechnician) {
+      url += `&assignedTechnician=${encodeURIComponent(options.assignedTechnician)}`
+    }
+    if (options.createdFrom) {
+      url += `&createdFrom=${encodeURIComponent(options.createdFrom)}`
+    }
+    if (options.createdTo) {
+      url += `&createdTo=${encodeURIComponent(options.createdTo)}`
     }
 
     const response = await fetch(url, {
