@@ -106,7 +106,7 @@ export const teamService = {
     }
 
     const response = await fetch(`${API_URL}/utilisateurs/${idUtilisateur}`, {
-      method: "PATCH",
+      method: "DELETE",
       credentials: "include",
       headers: buildHeaders(),
       body: JSON.stringify({ actif }),

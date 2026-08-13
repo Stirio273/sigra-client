@@ -113,3 +113,8 @@ export type Rejet = {
   decision: boolean | null;
   dateDecision: string | null;
 };
+
+export type TicketStatus = {
+  idStatut: number;
+  libelle: string;
+};

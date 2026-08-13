@@ -22,6 +22,7 @@ import { technicianService } from "@/services/technician.service"
 import { applicationService } from "@/services/application.service"
 import type { TicketMetadata } from "@/types/fiche-ticket"
 import type { Technician } from "@/types/technician"
+import type { TicketStatus } from "@/types/ticket"
 import { AuthContext } from "@/context/AuthContext"
 import type { Application } from "@/types/application"
 import type { EntiteExterne } from "@/types/entiteexterne"
@@ -71,6 +72,11 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
   const [transferSubmitting, setTransferSubmitting] = useState(false)
 
   const [assignOpen, setAssignOpen] = useState(false)
+
+  const [statusOpen, setStatusOpen] = useState(false)
+  const [statuses, setStatuses] = useState<TicketStatus[]>([])
+  const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null)
+  const [statusSubmitting, setStatusSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -143,6 +149,27 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
     }
   }, [transferOpen])
 
+  useEffect(() => {
+    if (!statusOpen) return
+
+    let cancelled = false
+    ticketService.getNextStatuts(ticket.idTicket)
+      .then((data) => {
+        if (!cancelled) {
+          setStatuses(data)
+          const current = data.find((s) => s.libelle === ticket.status)
+          if (current) setSelectedStatusId(current.idStatut)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setStatuses([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [statusOpen, ticket.status, ticket.idTicket])
+
   const handleAssign = async () => {
     if (!isAdmin && !currentUserGuid) return
     if (isAdmin && !selectedTechnician) return
@@ -192,6 +219,20 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
       // handle error
     } finally {
       setTransferSubmitting(false)
+    }
+  }
+
+  const handleStatusUpdate = async () => {
+    if (selectedStatusId === null) return
+
+    setStatusSubmitting(true)
+    try {
+      await ticketService.updateTicketStatus(ticket.idTicket, selectedStatusId)
+      setStatusOpen(false)
+    } catch {
+      // handle error
+    } finally {
+      setStatusSubmitting(false)
     }
   }
 
@@ -309,6 +350,59 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
                   />
                   <Button size="sm" onClick={handleApplicationUpdate} disabled={appSubmitting || selectedApplication === null}>
                     {appSubmitting ? "Envoi..." : "Enregistrer"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={statusOpen} onOpenChange={setStatusOpen}>
+            <DialogTrigger
+              render={
+                <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                  Changer le statut du ticket
+                </span>
+              }
+              nativeButton={false}
+            />
+            <DialogContent className="w-full max-w-md">
+              <DialogTitle className="text-sm font-medium mb-2">
+                Changer le statut du ticket
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mb-3">
+                Sélectionnez un nouveau statut pour ce ticket.
+              </DialogDescription>
+              <div className="space-y-3">
+                <Select
+                  value={selectedStatusId !== null ? String(selectedStatusId) : ""}
+                  onValueChange={(value) => setSelectedStatusId(Number(value))}
+                >
+                  <SelectTrigger size="sm" className="w-full">
+                    <SelectValue placeholder="Sélectionner un statut">
+                      {(value) => {
+                        const status = statuses.find((s) => String(s.idStatut) === value)
+                        return status ? status.libelle : "Sélectionner un statut"
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statuses.map((status) => (
+                      <SelectItem key={status.idStatut} value={String(status.idStatut)}>
+                        {status.libelle}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex justify-end gap-2">
+                  <DialogClose
+                    render={
+                      <Button variant="outline" size="sm" type="button">
+                        Annuler
+                      </Button>
+                    }
+                    nativeButton={false}
+                  />
+                  <Button size="sm" onClick={handleStatusUpdate} disabled={statusSubmitting || selectedStatusId === null}>
+                    {statusSubmitting ? "Envoi..." : "Enregistrer"}
                   </Button>
                 </div>
               </div>

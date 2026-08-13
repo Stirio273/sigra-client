@@ -1,5 +1,4 @@
-import type { PaginatedResponse, Ticket, TicketDetail, Rejet } from '../types/ticket';
-import type { EntiteExterne } from '../types/entiteexterne';
+import type { PaginatedResponse, Ticket, TicketDetail, Rejet, TicketStatus } from '../types/ticket';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const MOCK_USER_EMAIL = import.meta.env.VITE_MOCK_USER_EMAIL;
@@ -18,9 +17,9 @@ const buildHeaders = (): Record<string, string> => {
 
 export type TicketFilterValues = {
   userGuid?: string
-  status?: string
+  status?: number
   criticite?: number
-  applicationName?: number
+  applicationName?: string
   assignedTechnician?: string
   createdFrom?: string
   createdTo?: string
@@ -86,6 +85,34 @@ export const ticketService = {
 
     if (!response.ok) {
       throw new Error('TICKET_FETCH_FAILED');
+    }
+
+    return response.json();
+  },
+
+  getStatuses: async (): Promise<TicketStatus[]> => {
+    const response = await fetch(`${API_URL}/tickets/statuts`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: buildHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('STATUSES_FETCH_FAILED');
+    }
+
+    return response.json();
+  },
+
+  getNextStatuts: async (idTicket: number): Promise<TicketStatus[]> => {
+    const response = await fetch(`${API_URL}/tickets/${idTicket}/next-statuts`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: buildHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('NEXT_STATUSES_FETCH_FAILED');
     }
 
     return response.json();
@@ -177,6 +204,19 @@ export const ticketService = {
 
     if (!response.ok) {
       throw new Error('TICKET_APPLICATION_UPDATE_FAILED');
+    }
+  },
+
+  updateTicketStatus: async (idTicket: number, idStatut: number): Promise<void> => {
+    const response = await fetch(`${API_URL}/tickets/${idTicket}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: buildHeaders(),
+      body: JSON.stringify({ idStatut }),
+    });
+
+    if (!response.ok) {
+      throw new Error('TICKET_STATUS_UPDATE_FAILED');
     }
   },
 

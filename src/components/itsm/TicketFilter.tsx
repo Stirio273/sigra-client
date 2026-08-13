@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { X, SlidersHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -12,16 +12,18 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { ticketService } from "@/services/ticket.service"
 import { applicationService, criticiteService } from "@/services/application.service"
 import { technicianService } from "@/services/technician.service"
 import type { Application } from "@/types/application"
 import type { Criticite } from "@/types/application"
 import type { Technician } from "@/types/technician"
+import type { TicketStatus } from "@/types/ticket"
 
 export type TicketFilterValues = {
-  status?: string
+  status?: number
   criticite?: number
-  applicationName?: number
+  applicationName?: string
   assignedTechnician?: string
   createdFrom?: string
   createdTo?: string
@@ -31,32 +33,56 @@ type TicketFilterProps = {
   onFilterChange: (filters: TicketFilterValues) => void
 }
 
+function getStatusLabel(statuses: TicketStatus[], id: number | null) {
+  if (id == null) return undefined
+  return statuses.find((s) => s.idStatut === id)?.libelle
+}
+
+function getCriticiteLabel(criticites: Criticite[], id: number | null) {
+  if (id == null) return undefined
+  return criticites.find((c) => c.idCriticite === id)?.libelle
+}
+
+function getApplicationLabel(applications: Application[], id: number | null) {
+  if (id == null) return undefined
+  return applications.find((a) => a.idApplication === id)?.libelle
+}
+
+function getTechnicianLabel(technicians: Technician[], userGuid: string | null) {
+  if (!userGuid) return undefined
+  const tech = technicians.find((t) => t.userGuid === userGuid)
+  return tech ? `${tech.prenom ? `${tech.prenom} ` : ""}${tech.nom}` : undefined
+}
+
 export function TicketFilter({ onFilterChange }: TicketFilterProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [status, setStatus] = useState<string | null>("")
-  const [criticite, setCriticite] = useState<string | null>("")
-  const [applicationName, setApplicationName] = useState<string | null>("")
-  const [assignedTechnician, setAssignedTechnician] = useState<string | null>("")
+  const [status, setStatus] = useState<number | null>(null)
+  const [criticite, setCriticite] = useState<number | null>(null)
+  const [applicationName, setApplicationName] = useState<string | null>(null)
+  const [assignedTechnician, setAssignedTechnician] = useState<string | null>(null)
   const [createdFrom, setCreatedFrom] = useState<string>("")
   const [createdTo, setCreatedTo] = useState<string>("")
 
   const [applications, setApplications] = useState<Application[]>([])
   const [criticites, setCriticites] = useState<Criticite[]>([])
   const [technicians, setTechnicians] = useState<Technician[]>([])
+  const [statuses, setStatuses] = useState<TicketStatus[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [apps, critics, techs] = await Promise.all([
+        const [apps, critics, techs, statuts] = await Promise.all([
           applicationService.getAll(),
           criticiteService.getAll(),
           technicianService.getAll(),
+          ticketService.getStatuses(),
         ])
         setApplications(apps)
         setCriticites(critics)
         setTechnicians(techs)
+        setStatuses(statuts)
       } catch (err) {
         console.error("Failed to load filter data", err)
       } finally {
@@ -66,22 +92,27 @@ export function TicketFilter({ onFilterChange }: TicketFilterProps) {
     fetchData()
   }, [])
 
+  const statusLabel = useMemo(() => getStatusLabel(statuses, status), [statuses, status])
+  const criticiteLabel = useMemo(() => getCriticiteLabel(criticites, criticite), [criticites, criticite])
+  // const applicationLabel = useMemo(() => getApplicationLabel(applications, applicationName), [applications, applicationName])
+  const technicianLabel = useMemo(() => getTechnicianLabel(technicians, assignedTechnician), [technicians, assignedTechnician])
+
   const applyFilters = () => {
     onFilterChange({
-      status: status || undefined,
-      criticite: criticite ? Number(criticite) : undefined,
-      applicationName: applicationName ? Number(applicationName) : undefined,
-      assignedTechnician: assignedTechnician || undefined,
+      status: status ?? undefined,
+      criticite: criticite ?? undefined,
+      applicationName: applicationName ?? undefined,
+      assignedTechnician: assignedTechnician ?? undefined,
       createdFrom: createdFrom || undefined,
       createdTo: createdTo || undefined,
     })
   }
 
   const resetFilters = () => {
-    setStatus("")
-    setCriticite("")
-    setApplicationName("")
-    setAssignedTechnician("")
+    setStatus(null)
+    setCriticite(null)
+    setApplicationName(null)
+    setAssignedTechnician(null)
     setCreatedFrom("")
     setCreatedTo("")
     onFilterChange({})
@@ -109,25 +140,26 @@ export function TicketFilter({ onFilterChange }: TicketFilterProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Statut</Label>
-              <Select value={status} onValueChange={setStatus}>
+              <Select value={status?.toString() ?? ""} onValueChange={(value) => setStatus(value ? Number(value) : null)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Tous les statuts" />
+                  <SelectValue placeholder="Tous les statuts">{statusLabel}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Tous les statuts</SelectItem>
-                  <SelectItem value="Nouveau">Nouveau</SelectItem>
-                  <SelectItem value="En cours">En cours</SelectItem>
-                  <SelectItem value="Résolu">Résolu</SelectItem>
-                  <SelectItem value="Fermé">Fermé</SelectItem>
+                  {statuses.map((s) => (
+                    <SelectItem key={s.idStatut} value={s.idStatut.toString()}>
+                      {s.libelle}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
               <Label>Criticité</Label>
-              <Select value={criticite} onValueChange={setCriticite}>
+              <Select value={criticite?.toString() ?? ""} onValueChange={(value) => setCriticite(value ? Number(value) : null)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Toutes les criticités" />
+                  <SelectValue placeholder="Toutes les criticités">{criticiteLabel}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Toutes les criticités</SelectItem>
@@ -142,14 +174,14 @@ export function TicketFilter({ onFilterChange }: TicketFilterProps) {
 
             <div className="space-y-2">
               <Label>Application</Label>
-              <Select value={applicationName} onValueChange={setApplicationName}>
+              <Select value={applicationName?.toString() ?? ""} onValueChange={(value) => setApplicationName(value ? value : null)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Toutes les applications" />
+                  <SelectValue placeholder="Toutes les applications">{applicationName}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Toutes les applications</SelectItem>
                   {applications.map((app) => (
-                    <SelectItem key={app.idApplication} value={app.idApplication.toString()}>
+                    <SelectItem key={app.idApplication} value={app.libelle.toString()}>
                       {app.libelle}
                     </SelectItem>
                   ))}
@@ -159,9 +191,9 @@ export function TicketFilter({ onFilterChange }: TicketFilterProps) {
 
             <div className="space-y-2">
               <Label>Assigné à</Label>
-              <Select value={assignedTechnician} onValueChange={setAssignedTechnician}>
+              <Select value={assignedTechnician ?? ""} onValueChange={setAssignedTechnician}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Tous les techniciens" />
+                  <SelectValue placeholder="Tous les techniciens">{technicianLabel}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Tous les techniciens</SelectItem>
