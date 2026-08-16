@@ -46,6 +46,14 @@ function Field({ label, value, mono }: { label: string; value: string | null | n
   )
 }
 
+function formatDate(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "—"
+  const date = new Date(value)
+  if (isNaN(date.getTime())) return "—"
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
 function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
   const authContext = useContext(AuthContext)
   const isAdmin = authContext?.user?.role === "Administrateur"
@@ -251,10 +259,10 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
           <Field label="Demandeur" value={ticket.requester} />
           <Field label="Direction" value={ticket.direction} />
           <Field label="Assigné à" value={ticket.assignedTo} />
-          <Field label="Date création" value={ticket.createdAt} />
+          <Field label="Date création" value={formatDate(ticket.createdAt)} />
           <Field label="SLA (heures)" value={ticket.sla} />
-          <Field label="Deadline résolution" value={ticket.deadlineResolution ?? "—"} />
-          <Field label="Date clôture" value={ticket.closedAt ?? "—"} />
+          <Field label="Deadline résolution" value={formatDate(ticket.deadlineResolution)} />
+          <Field label="Date clôture" value={formatDate(ticket.closedAt)} />
         </CardContent>
       </Card>
       <Card>

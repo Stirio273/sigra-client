@@ -84,7 +84,7 @@ function NotificationDropdown({
 
   const handleItemClick = useCallback(
     (notification: Notification) => {
-      if (!notification.read) {
+      if (!notification.isRead) {
         onMarkAsRead(notification.id);
       }
     },
@@ -106,7 +106,7 @@ function NotificationDropdown({
                   e.stopPropagation();
                   onMarkAllAsRead();
                 }}
-                className="h-auto p-0 text-xs font-normal text-muted-foreground hover:text-foreground"
+                className="h-auto wp-0 w-auto text-xs font-normal text-muted-foreground hover:text-foreground"
               >
                 Tout marquer comme lu
               </Button>
@@ -123,15 +123,15 @@ function NotificationDropdown({
                 key={notification.id}
                 inset
                 className={`flex flex-col items-start gap-1 ${
-                  !notification.read ? "bg-muted/50" : ""
+                  !notification.isRead ? "bg-muted/50" : ""
                 }`}
                 onFocus={() => {}}
                 onClick={() => handleItemClick(notification)}
-                disabled={notification.read}
+                disabled={notification.isRead}
               >
                 <div className="flex w-full items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    {!notification.read && (
+                    {!notification.isRead && (
                       <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
                     )}
                     <span className="text-xs font-medium">{notification.title}</span>
@@ -151,7 +151,7 @@ function NotificationDropdown({
                     </span>
                   )}
                 </div>
-                {!notification.read && (
+                {!notification.isRead && (
                   <button
                     type="button"
                     onClick={(e) => {

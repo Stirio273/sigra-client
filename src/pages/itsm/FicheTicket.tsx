@@ -134,11 +134,9 @@ export default function FicheTicket() {
         )
         setAttachments(mappedAttachments)
 
-        if (isAdmin) {
-          const rejetData = await ticketService.getRejet(ticketId)
-          if (!cancelled) {
-            setRejet(rejetData)
-          }
+        const rejetData = await ticketService.getRejet(ticketId)
+        if (!cancelled) {
+          setRejet(rejetData)
         }
       } catch (err) {
         if (!cancelled) {
@@ -187,37 +185,58 @@ export default function FicheTicket() {
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-full mx-auto">
         <TopBar />
-        {isAdmin && rejet && (
+        {rejet && detail && (isAdmin || detail.statut?.libelle === "Rejete") && (
           <div className="border border-amber-200 bg-amber-50 p-4 mb-6">
             <div className="flex items-start gap-3">
               <TriangleAlert className="mt-0.5 h-4 w-4 text-amber-600" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-900">
-                  Demande de rejet en attente de validation
-                </p>
-                <p className="text-xs text-amber-700 mt-1">
-                  Proposée par {rejet.auteur.prenom} {rejet.auteur.nom} · {new Date(rejet.dateProposition).toLocaleDateString("fr-FR")}
-                </p>
-                <p className="text-xs text-amber-800 mt-2 italic">
-                  {rejet.justificatif}
-                </p>
-                <div className="mt-3 flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleRejetResponse(true)}
-                    disabled={rejetSubmitting}
-                  >
-                    {rejetAction === "accept" && rejetSubmitting ? "Validation..." : "Valider le rejet"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRejetResponse(false)}
-                    disabled={rejetSubmitting}
-                  >
-                    {rejetAction === "refuse" && rejetSubmitting ? "Refus..." : "Refuser"}
-                  </Button>
-                </div>
+                {isAdmin && rejet.decision === null ? (
+                  <>
+                    <p className="text-sm font-medium text-amber-900">
+                      Demande de rejet en attente de validation
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      Proposée par {rejet.auteur.prenom} {rejet.auteur.nom} · {new Date(rejet.dateProposition).toLocaleDateString("fr-FR")}
+                    </p>
+                    <p className="text-xs text-amber-800 mt-2 italic">
+                      {rejet.justificatif}
+                    </p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleRejetResponse(true)}
+                        disabled={rejetSubmitting}
+                      >
+                        {rejetAction === "accept" && rejetSubmitting ? "Validation..." : "Valider le rejet"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRejetResponse(false)}
+                        disabled={rejetSubmitting}
+                      >
+                        {rejetAction === "refuse" && rejetSubmitting ? "Refus..." : "Refuser"}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-amber-900">
+                      Demande de rejet
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      Proposée par {rejet.auteur.prenom} {rejet.auteur.nom} · {new Date(rejet.dateProposition).toLocaleDateString("fr-FR")}
+                    </p>
+                    <p className="text-xs text-amber-800 mt-2 italic">
+                      {rejet.justificatif}
+                    </p>
+                    {rejet.decision !== null && rejet.dateDecision && (
+                      <p className="text-xs text-amber-700 mt-2">
+                        Décision: {rejet.decision ? "Validée" : "Refusée"} · {new Date(rejet.dateDecision).toLocaleDateString("fr-FR")}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>

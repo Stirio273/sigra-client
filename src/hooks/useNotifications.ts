@@ -15,7 +15,7 @@ export function useNotifications() {
   const [error, setError] = useState<string | null>(null);
 
   const computeUnreadCount = useCallback((notifications: Notification[]) => {
-    return notifications.filter((n) => !n.read).length;
+    return notifications.filter((n) => !n.isRead).length;
   }, []);
 
   const refresh = useCallback(async () => {
@@ -82,7 +82,7 @@ export function useNotifications() {
               : [notification, ...prev.notifications];
             return {
               notifications,
-              unreadCount: notifications.filter((n) => !n.read).length,
+              unreadCount: notifications.filter((n) => !n.isRead).length,
             };
           });
         });

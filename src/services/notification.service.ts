@@ -32,7 +32,7 @@ export const notificationService = {
 
   async markAsRead(notificationId: string): Promise<Notification> {
     const response = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
-      method: "POST",
+      method: "PATCH",
       credentials: "include",
       headers: buildHeaders(),
     });
@@ -46,7 +46,7 @@ export const notificationService = {
 
   async markAllAsRead(): Promise<void> {
     const response = await fetch(`${API_URL}/notifications/read-all`, {
-      method: "POST",
+      method: "PATCH",
       credentials: "include",
       headers: buildHeaders(),
     });

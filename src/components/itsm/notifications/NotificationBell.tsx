@@ -16,10 +16,10 @@ function NotificationBell({ unreadCount, onClick }: NotificationBellProps) {
     >
       <Bell size={18} />
       {unreadCount > 0 && (
-        <Badge
-          variant="destructive"
-          className="absolute -top-1 -right-1 min-w-5 justify-center rounded-none px-1 py-0 text-[10px]"
-        >
+      <Badge
+        variant="destructive"
+        className="absolute -top-1 -right-1 flex min-w-5 h-5 items-center justify-center rounded-full px-1 py-0 text-[10px]"
+      >
           {unreadCount > 99 ? "99+" : unreadCount}
         </Badge>
       )}
