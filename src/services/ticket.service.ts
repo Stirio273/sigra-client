@@ -209,7 +209,7 @@ export const ticketService = {
 
   updateTicketStatus: async (idTicket: number, idStatut: number): Promise<void> => {
     const response = await fetch(`${API_URL}/tickets/${idTicket}`, {
-      method: 'PATCH',
+      method: 'PUT',
       credentials: 'include',
       headers: buildHeaders(),
       body: JSON.stringify({ idStatut }),
