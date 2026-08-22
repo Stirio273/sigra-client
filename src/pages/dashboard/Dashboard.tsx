@@ -328,6 +328,7 @@ export default function Dashboard() {
   const [data, setData] = useState<PaginatedResponse<Ticket> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<TicketFilterValues>({})
+  const [exportFormat, setExportFormat] = useState<string>('xlsx')
 
   const authContext = useContext(AuthContext)
   const isAdmin = (authContext?.user?.role == 'Administrateur')
@@ -346,6 +347,26 @@ export default function Dashboard() {
       setData(result)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'TICKETS_FETCH_FAILED')
+    }
+  }
+
+  const handleExport = async () => {
+    try {
+      const blob = await ticketService.exportTickets(
+        filters.createdFrom || '',
+        filters.createdTo || '',
+        exportFormat
+      )
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `tickets.${exportFormat}`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'EXPORT_FAILED')
     }
   }
 
@@ -372,6 +393,18 @@ export default function Dashboard() {
                 </Tabs>
                 <Button variant="link" size="sm" className="h-auto p-0">Importer une demande</Button>
                 <Button variant="link" size="sm" className="h-auto p-0">Paramètres</Button>
+                <div className="flex items-center gap-2">
+                  <Select value={exportFormat} onValueChange={(value) => setExportFormat(value ?? 'xlsx')}>
+                    <SelectTrigger className="h-8 w-[100px]">
+                      <SelectValue placeholder="Format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="xlsx">Excel (XLSX)</SelectItem>
+                      <SelectItem value="csv">CSV</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" onClick={handleExport}>Exporter</Button>
+                </div>
               </div>
               <div className="text-sm text-muted-foreground">Aide & Support</div>
             </div>

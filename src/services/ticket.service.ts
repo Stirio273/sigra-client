@@ -232,4 +232,23 @@ export const ticketService = {
       throw new Error('TICKET_TRANSFER_FAILED');
     }
   },
+
+  exportTickets: async (dateFrom: string, dateTo: string, format: string): Promise<Blob> => {
+    const payload: Record<string, string> = { format }
+    if (dateFrom) payload.dateFrom = dateFrom
+    if (dateTo) payload.dateTo = dateTo
+
+    const response = await fetch(`${API_URL}/tickets/export`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: buildHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error('TICKETS_EXPORT_FAILED');
+    }
+
+    return response.blob();
+  },
 };
