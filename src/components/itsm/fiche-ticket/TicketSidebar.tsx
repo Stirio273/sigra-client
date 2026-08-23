@@ -86,6 +86,10 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
   const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null)
   const [statusSubmitting, setStatusSubmitting] = useState(false)
 
+  const [noteOpen, setNoteOpen] = useState(false)
+  const [note, setNote] = useState("")
+  const [noteSubmitting, setNoteSubmitting] = useState(false)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
@@ -241,6 +245,20 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
       // handle error
     } finally {
       setStatusSubmitting(false)
+    }
+  }
+
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setNoteSubmitting(true)
+    try {
+      await ticketService.addComment(ticket.idTicket, note)
+      setNoteOpen(false)
+      setNote("")
+    } catch {
+      // handle error
+    } finally {
+      setNoteSubmitting(false)
     }
   }
 
@@ -485,67 +503,106 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
               </div>
             </DialogContent>
           </Dialog>
-           {isAdmin ? (
-             <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
-               <DialogTrigger
-                 render={
-                   <span className="text-muted-foreground cursor-pointer hover:text-foreground">
-                     Assigner
-                   </span>
-                 }
-                 nativeButton={false}
-               />
-               <DialogContent className="w-full max-w-md">
-                 <DialogTitle className="text-sm font-medium mb-2">
-                   Assigner le ticket
-                 </DialogTitle>
-                 <DialogDescription className="text-xs text-muted-foreground mb-3">
-                   Sélectionnez un technicien pour assigner ce ticket.
-                 </DialogDescription>
-                 <div className="space-y-3">
-                   <Select
-                     value={selectedTechnician ? String(selectedTechnician.idUtilisateur) : ""}
-                     onValueChange={(value) => {
-                       const tech = technicians.find((t) => String(t.idUtilisateur) === value) || null
-                       setSelectedTechnician(tech)
-                     }}
-                   >
-                     <SelectTrigger size="sm" className="w-full">
-                       <SelectValue placeholder="Choisir un technicien" />
-                     </SelectTrigger>
-                     <SelectContent>
-                       {technicians.map((tech) => (
-                         <SelectItem key={tech.idUtilisateur} value={String(tech.idUtilisateur)}>
-                           {tech.prenom ? `${tech.prenom} ${tech.nom}` : tech.nom}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                   <div className="flex justify-end gap-2">
-                     <DialogClose
-                       render={
-                         <Button variant="outline" size="sm" type="button">
-                           Annuler
-                         </Button>
-                       }
-                       nativeButton={false}
-                     />
-                     <Button size="sm" onClick={handleAssign} disabled={assignSubmitting || !selectedTechnician}>
-                       {assignSubmitting ? "Assignation..." : "Assigner"}
-                     </Button>
-                   </div>
+            {isAdmin ? (
+              <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+                <DialogTrigger
+                  render={
+                    <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                      Assigner
+                    </span>
+                  }
+                  nativeButton={false}
+                />
+                <DialogContent className="w-full max-w-md">
+                  <DialogTitle className="text-sm font-medium mb-2">
+                    Assigner le ticket
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground mb-3">
+                    Sélectionnez un technicien pour assigner ce ticket.
+                  </DialogDescription>
+                  <div className="space-y-3">
+                    <Select
+                      value={selectedTechnician ? String(selectedTechnician.idUtilisateur) : ""}
+                      onValueChange={(value) => {
+                        const tech = technicians.find((t) => String(t.idUtilisateur) === value) || null
+                        setSelectedTechnician(tech)
+                      }}
+                    >
+                      <SelectTrigger size="sm" className="w-full">
+                        <SelectValue placeholder="Choisir un technicien" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {technicians.map((tech) => (
+                          <SelectItem key={tech.idUtilisateur} value={String(tech.idUtilisateur)}>
+                            {tech.prenom ? `${tech.prenom} ${tech.nom}` : tech.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex justify-end gap-2">
+                      <DialogClose
+                        render={
+                          <Button variant="outline" size="sm" type="button">
+                            Annuler
+                          </Button>
+                        }
+                        nativeButton={false}
+                      />
+                      <Button size="sm" onClick={handleAssign} disabled={assignSubmitting || !selectedTechnician}>
+                        {assignSubmitting ? "Assignation..." : "Assigner"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            ) : (
+              <span
+                className="text-muted-foreground cursor-pointer hover:text-foreground"
+                onClick={handleAssign}
+              >
+                S'assigner
+              </span>
+            )}
+           <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
+             <DialogTrigger
+               render={
+                 <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                   Ajouter une note
+                 </span>
+               }
+               nativeButton={false}
+             />
+             <DialogContent className="w-full max-w-md">
+               <DialogTitle className="text-sm font-medium mb-2">
+                 Ajouter une note interne
+               </DialogTitle>
+               <DialogDescription className="text-xs text-muted-foreground mb-3">
+                 Cette note sera ajoutée aux commentaires internes du ticket.
+               </DialogDescription>
+               <form onSubmit={handleAddNote} className="space-y-3">
+                 <textarea
+                   value={note}
+                   onChange={(e) => setNote(e.target.value)}
+                   placeholder="Votre note..."
+                   className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
+                   required
+                 />
+                 <div className="flex justify-end gap-2">
+                   <DialogClose
+                     render={
+                       <Button variant="outline" size="sm" type="button">
+                         Annuler
+                       </Button>
+                     }
+                     nativeButton={false}
+                   />
+                   <Button type="submit" size="sm" disabled={noteSubmitting || !note.trim()}>
+                     {noteSubmitting ? "Envoi..." : "Ajouter"}
+                   </Button>
                  </div>
-               </DialogContent>
-             </Dialog>
-           ) : (
-             <span
-               className="text-muted-foreground cursor-pointer hover:text-foreground"
-               onClick={handleAssign}
-             >
-               S'assigner
-             </span>
-           )}
-          <span className="text-muted-foreground">Ajouter une note</span>
+               </form>
+             </DialogContent>
+           </Dialog>
         </CardContent>
       </Card>
     </aside>

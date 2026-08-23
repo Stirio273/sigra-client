@@ -1,4 +1,5 @@
 import type { PaginatedResponse, Ticket, TicketDetail, Rejet, TicketStatus } from '../types/ticket';
+import type { TicketComment } from '../types/fiche-ticket';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const MOCK_USER_EMAIL = import.meta.env.VITE_MOCK_USER_EMAIL;
@@ -230,6 +231,33 @@ export const ticketService = {
 
     if (!response.ok) {
       throw new Error('TICKET_TRANSFER_FAILED');
+    }
+  },
+
+  getComments: async (idTicket: number): Promise<TicketComment[]> => {
+    const response = await fetch(`${API_URL}/tickets/${idTicket}/comments`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: buildHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('COMMENTS_FETCH_FAILED');
+    }
+
+    return response.json();
+  },
+
+  addComment: async (idTicket: number, contenu: string): Promise<void> => {
+    const response = await fetch(`${API_URL}/tickets/${idTicket}/comments`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: buildHeaders(),
+      body: JSON.stringify({ contenu }),
+    });
+
+    if (!response.ok) {
+      throw new Error('COMMENT_CREATION_FAILED');
     }
   },
 

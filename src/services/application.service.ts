@@ -1,4 +1,4 @@
-import type { Application, ClasseService, Criticite, JourFerie } from "../types/application";
+import type { Application, ClasseService, Criticite, JourFerie, KnowledgeFile } from "../types/application";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const MOCK_USER_EMAIL = import.meta.env.VITE_MOCK_USER_EMAIL;
@@ -209,9 +209,127 @@ export const criticiteService = {
   },
 };
 
+const buildUploadHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {};
+
+  if (MOCK_USER_EMAIL) {
+    headers["X-Mock-User"] = MOCK_USER_EMAIL;
+  }
+
+  return headers;
+};
+
 /* ------------------------------------------------------------------ */
-/*  Jours fériés                                                      */
+/*  Connaissances IA par application                                   */
 /* ------------------------------------------------------------------ */
+
+export const knowledgeService = {
+  uploadVideo: async (
+    idApplication: number,
+    file: File
+  ): Promise<KnowledgeFile> => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("type", "video");
+
+    const response = await fetch(
+      `${API_URL}/applications/${idApplication}/knowledge`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: buildUploadHeaders(),
+        body: form,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("VIDEO_UPLOAD_FAILED");
+    }
+
+    return response.json();
+  },
+
+  uploadDocument: async (
+    idApplication: number,
+    file: File
+  ): Promise<KnowledgeFile> => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("type", "document");
+
+    const response = await fetch(
+      `${API_URL}/applications/${idApplication}/knowledge`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: buildUploadHeaders(),
+        body: form,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("DOCUMENT_UPLOAD_FAILED");
+    }
+
+    return response.json();
+  },
+
+  getVideos: async (
+    idApplication: number
+  ): Promise<KnowledgeFile[]> => {
+    const response = await fetch(
+      `${API_URL}/applications/${idApplication}/knowledge?type=video`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: buildHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("VIDEOS_FETCH_FAILED");
+    }
+
+    return response.json();
+  },
+
+  getDocuments: async (
+    idApplication: number
+  ): Promise<KnowledgeFile[]> => {
+    const response = await fetch(
+      `${API_URL}/applications/${idApplication}/knowledge?type=document`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: buildHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("DOCUMENTS_FETCH_FAILED");
+    }
+
+    return response.json();
+  },
+
+  deleteKnowledge: async (
+    idApplication: number,
+    idKnowledge: number
+  ): Promise<void> => {
+    const response = await fetch(
+      `${API_URL}/applications/${idApplication}/knowledge/${idKnowledge}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+        headers: buildHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("KNOWLEDGE_DELETE_FAILED");
+    }
+  },
+};
 
 export const holidayService = {
   getAll: async (): Promise<JourFerie[]> => {

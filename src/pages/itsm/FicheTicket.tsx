@@ -8,7 +8,9 @@ import TopBar from "@/components/itsm/TopBar"
 import { TicketHeader } from "@/components/itsm/fiche-ticket/TicketHeader"
 import { TicketSidebar } from "@/components/itsm/fiche-ticket/TicketSidebar"
 import { EmailThread } from "@/components/itsm/fiche-ticket/EmailThread"
+import { CommentairesInternes } from "@/components/itsm/fiche-ticket/CommentairesInternes"
 import { AttachmentList } from "@/components/itsm/fiche-ticket/AttachmentList"
+import { ChatBot } from "@/components/itsm/fiche-ticket/ChatBot"
 import { Button } from "@/components/ui/button"
 import { AuthContext } from "@/context/AuthContext"
 
@@ -245,10 +247,12 @@ export default function FicheTicket() {
           <main className="flex-1 space-y-6 min-w-0">
             <TicketHeader ticket={ticket} />
             <EmailThread emails={emails} />
+            <CommentairesInternes ticketId={ticketId} />
             <AttachmentList attachments={attachments} />
           </main>
           <TicketSidebar ticket={ticket} onApplicationUpdated={handleApplicationUpdated} />
         </div>
+        <ChatBot ticketId={ticketId} />
       </div>
     </div>
   )

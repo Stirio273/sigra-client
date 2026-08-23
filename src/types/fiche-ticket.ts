@@ -34,3 +34,13 @@ export type Attachment = {
   sizeBytes: number
   path: string
 }
+
+export type TicketComment = {
+  idCommentaire: number
+  idTicket: number
+  idAuteur: number
+  auteurNom: string
+  auteurPrenom: string
+  contenu: string
+  dateCreation: string
+}

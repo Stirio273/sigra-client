@@ -5,6 +5,14 @@ export type Application = {
   idCs: number;
 };
 
+export type KnowledgeFile = {
+  id: number;
+  nom: string;
+  type: "video" | "document";
+  taille: number;
+  dateUpload: string;
+};
+
 export type ClasseService = {
   idCs: number;
   code: string;

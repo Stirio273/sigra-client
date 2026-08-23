@@ -25,9 +25,9 @@ function TopBar() {
           <Link to="/reports" className="flex items-center gap-1.5 hover:underline">
             <BarChart3 size={16} /> Rapports
           </Link>
-          <a href="#" className="flex items-center gap-1.5 hover:underline">
+          <Link to="/modules" className="flex items-center gap-1.5 hover:underline">
             <Puzzle size={16} /> Modules
-          </a>
+          </Link>
           <Link to="/outils" className="flex items-center gap-1.5 hover:underline">
             <Wrench size={16} /> Outils
           </Link>
