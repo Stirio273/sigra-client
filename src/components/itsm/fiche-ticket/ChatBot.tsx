@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, FormEvent } from "react"
+import { useState, useEffect, useRef, type SubmitEvent } from "react"
 import { MessageSquare, Bot, Send } from "lucide-react"
+import ReactMarkdown from "react-markdown"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -41,7 +42,7 @@ export function ChatBot({ ticketId }: ChatBotProps) {
     }
   }, [messages, open])
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault()
     const text = input.trim()
     if (!text || sending) return
@@ -112,7 +113,58 @@ export function ChatBot({ ticketId }: ChatBotProps) {
                         : "bg-muted text-foreground rounded-none"
                     }`}
                   >
-                    {msg.content}
+                    {msg.role === "assistant" ? (
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => (
+                            <p className="mb-2 last:mb-0 text-xs leading-relaxed">{children}</p>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="list-disc pl-4 mb-2 last:mb-0 space-y-1">{children}</ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal pl-4 mb-2 last:mb-0 space-y-1">{children}</ol>
+                          ),
+                          code: ({ className, children, ...props }) => {
+                            const isInline = !className
+                            if (isInline) {
+                              return (
+                                <code
+                                  className="bg-black/10 px-1 py-0.5 rounded-none text-xs"
+                                  {...props}
+                                >
+                                  {children}
+                                </code>
+                              )
+                            }
+                            return (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            )
+                          },
+                          pre: ({ children }) => (
+                            <pre className="bg-black/10 p-2 overflow-x-auto mb-2 last:mb-0 rounded-none">
+                              {children}
+                            </pre>
+                          ),
+                          a: ({ children, href }) => (
+                            <a href={href} className="underline underline-offset-2 hover:text-foreground/80" target="_blank" rel="noreferrer">
+                              {children}
+                            </a>
+                          ),
+                          blockquote: ({ children }) => (
+                            <blockquote className="border-l-2 border-foreground/20 pl-3 italic mb-2 last:mb-0">
+                              {children}
+                            </blockquote>
+                          ),
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    ) : (
+                      msg.content
+                    )}
                   </div>
                 </div>
               ))}
