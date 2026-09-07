@@ -29,7 +29,7 @@ const ProtectedRoute = ({
     // Check role-based access if roles are required
     if (requiredRoles.length > 0) {
         const hasRequiredRole = requiredRoles.some((role) =>
-            user?.roles.includes(role)
+            user?.role == role
         );
 
         if (!hasRequiredRole) {

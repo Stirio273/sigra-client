@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ApplicationsTab from "@/pages/itsm/outils/ApplicationsTab";
 import ClassesServiceTab from "@/pages/itsm/outils/ClassesServiceTab";

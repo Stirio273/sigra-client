@@ -43,10 +43,10 @@ function getCriticiteLabel(criticites: Criticite[], id: number | null) {
   return criticites.find((c) => c.idCriticite === id)?.libelle
 }
 
-function getApplicationLabel(applications: Application[], id: number | null) {
-  if (id == null) return undefined
-  return applications.find((a) => a.idApplication === id)?.libelle
-}
+// function getApplicationLabel(applications: Application[], id: number | null) {
+//   if (id == null) return undefined
+//   return applications.find((a) => a.idApplication === id)?.libelle
+// }
 
 function getTechnicianLabel(technicians: Technician[], userGuid: string | null) {
   if (!userGuid) return undefined

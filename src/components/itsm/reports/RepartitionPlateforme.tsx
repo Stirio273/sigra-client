@@ -84,9 +84,9 @@ export function RepartitionPlateforme() {
     fill: COLORS[index % COLORS.length],
   }))
 
-  const nameToConfigKey = new Map(
-    data.map((item) => [item.applicationName, `app-${item.applicationId}`])
-  )
+  // const nameToConfigKey = new Map(
+  //   data.map((item) => [item.applicationName, `app-${item.applicationId}`])
+  // )
 
   const chartConfig = {
     tickets: {
