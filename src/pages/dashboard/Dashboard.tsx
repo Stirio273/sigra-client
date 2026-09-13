@@ -44,6 +44,8 @@ type TicketRow = {
   assignedTo: string
   group?: string
   status: string
+  dateCreation: string
+  criticite: string | null
 }
 
 function mapTicket(t: Ticket): TicketRow {
@@ -54,19 +56,29 @@ function mapTicket(t: Ticket): TicketRow {
     assignedTo: t.technicienAssigne ? `${t.technicienAssigne.email}` : "Non attribué",
     group: t.demandeurDirection || undefined,
     status: t.statut ? `${t.statut.libelle}` : "Nouveau",
+    dateCreation: t.dateCreation,
+    criticite: t.criticite?.libelle || null,
   }
 }
 
-function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, onAssignSuccess }: {
+function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, onAssignSuccess, sortBy, sortDescending, onSortChange }: {
   tickets: TicketRow[]
   pageNumber: number
   pageSize: number
   totalCount: number
   onPageChange: (page: number) => void
   onAssignSuccess?: (technicianId: number, technicianEmail: string, ticketIds: number[]) => void
+  sortBy: string
+  sortDescending: boolean
+  onSortChange: (sortBy: string) => void
 }) {
   const authContext = useContext(AuthContext)
   const isAdmin = (authContext?.user?.role == 'Administrateur')
+
+  const SortIndicator = ({ column }: { column: string }) => {
+    if (sortBy !== column) return <span className="ml-1 text-muted-foreground">↕</span>
+    return <span className="ml-1 text-primary">{sortDescending ? '↓' : '↑'}</span>
+  }
 
   const [technicians, setTechnicians] = useState<Technician[]>([])
   const [techLoading, setTechLoading] = useState(true)
@@ -205,11 +217,21 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, 
                   }}
                 />
               </TableHead>
-              <TableHead>Ticket#</TableHead>
+              <TableHead className="cursor-pointer select-none" onClick={() => onSortChange('numeroTicket')}>
+                Ticket# <SortIndicator column="numeroTicket" />
+              </TableHead>
               <TableHead>Email demandeur</TableHead>
               <TableHead>Assigné à</TableHead>
               <TableHead>Nom demandeur</TableHead>
-              <TableHead>Statut</TableHead>
+              <TableHead className="cursor-pointer select-none" onClick={() => onSortChange('status')}>
+                Statut <SortIndicator column="status" />
+              </TableHead>
+              <TableHead className="cursor-pointer select-none" onClick={() => onSortChange('priority')}>
+                Priorité <SortIndicator column="priority" />
+              </TableHead>
+              <TableHead className="cursor-pointer select-none" onClick={() => onSortChange('createdat')}>
+                Date création <SortIndicator column="createdat" />
+              </TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -230,6 +252,10 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, 
                 <TableCell>{t.group || "-"}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{t.status}</Badge>
+                </TableCell>
+                <TableCell>{t.criticite ?? '-'}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {new Date(t.dateCreation).toLocaleDateString('fr-FR')}
                 </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon-sm" render={<Link to={`/tickets/${t.id}`}></Link>} nativeButton={false}>
@@ -329,13 +355,17 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<TicketFilterValues>({})
   const [exportFormat, setExportFormat] = useState<string>('xlsx')
+  const [sortBy, setSortBy] = useState<string>('')
+  const [sortDescending, setSortDescending] = useState(true)
 
   const authContext = useContext(AuthContext)
   const isAdmin = (authContext?.user?.role == 'Administrateur')
   const [filterMode, setFilterMode] = useState<'all' | 'mine'>(isAdmin ? 'all' : 'mine')
 
-  const fetchTickets = async (pageNumber: number = 1, pageSize: number = 20, overrideFilterMode?: string, overrideFilters?: TicketFilterValues) => {
+  const fetchTickets = async (pageNumber: number = 1, pageSize: number = 20, overrideFilterMode?: string, overrideFilters?: TicketFilterValues, overrideSortBy?: string, overrideSortDescending?: boolean) => {
     const currentFilter = overrideFilterMode ?? filterMode
+    const currentSortBy = overrideSortBy ?? sortBy
+    const currentSortDescending = overrideSortDescending ?? sortDescending
     const technicianEmail = currentFilter === 'mine' && authContext?.user?.userGuid ? authContext.user.userGuid : undefined
     try {
       setError(null)
@@ -343,11 +373,19 @@ export default function Dashboard() {
       const result = await ticketService.getAll(pageNumber, pageSize, {
         userGuid: technicianEmail,
         ...activeFilters
-      })
+      }, currentSortBy, currentSortDescending)
       setData(result)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'TICKETS_FETCH_FAILED')
     }
+  }
+
+  const handleSort = (column: string) => {
+    const nextSortBy = column
+    const nextSortDescending = sortBy === column ? !sortDescending : true
+    setSortBy(nextSortBy)
+    setSortDescending(nextSortDescending)
+    fetchTickets(1, data?.pageSize ?? 20, undefined, undefined, nextSortBy, nextSortDescending)
   }
 
   const handleExport = async () => {
@@ -442,11 +480,14 @@ export default function Dashboard() {
                       }
                     })
                   }}
+                  sortBy={sortBy}
+                  sortDescending={sortDescending}
+                  onSortChange={handleSort}
                 />
               </>
             )}
           </div>
-          <RightPanel />
+          {/* <RightPanel /> */}
         </div>
       </div>
     </div>

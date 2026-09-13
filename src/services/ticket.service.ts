@@ -30,7 +30,9 @@ export const ticketService = {
   getAll: async (
     pageNumber: number = 1,
     pageSize: number = 20,
-    optionsOrUserGuid?: string | TicketFilterValues
+    optionsOrUserGuid?: string | TicketFilterValues,
+    sortBy?: string,
+    sortDescending: boolean = false
   ): Promise<PaginatedResponse<Ticket>> => {
     let url = `${API_URL}/tickets?pagination.pageNumber=${pageNumber}&pagination.pageSize=${pageSize}`
 
@@ -63,6 +65,10 @@ export const ticketService = {
     if (options.createdTo) {
       url += `&createdTo=${encodeURIComponent(options.createdTo)}`
     }
+    if (sortBy) {
+      url += `&sortBy=${encodeURIComponent(sortBy)}`
+    }
+    url += `&sortDescending=${encodeURIComponent(sortDescending ? 'true' : 'false')}`
 
     const response = await fetch(url, {
       method: 'GET',

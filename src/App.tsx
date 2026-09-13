@@ -25,12 +25,21 @@ export function App() {
           <Route path="/forbidden" element={<ForbiddenPage />} />
 
           {/* Protected Routes (authentication required) */}
-          <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute requiredRoles={["Administrateur", "Consultant", "Technicien"]} />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/modules" element={<Modules />} />
-            <Route path="/outils" element={<Outils />} />
             <Route path="/reports" element={<Reports />} />
+          </Route>
+
+          <Route element={<ProtectedRoute requiredRoles={["Administrateur", "Technicien"]} />}>
             <Route path="/team" element={<Team />} />
+            <Route path="/modules" element={<Modules />} />
+          </Route>
+
+          <Route element={<ProtectedRoute requiredRoles={["Administrateur"]} />}>
+            <Route path="/outils" element={<Outils />} />
+          </Route>
+
+          <Route element={<ProtectedRoute />}>
             <Route path="/tickets/:id" element={<FicheTicket />} />
           </Route>
 

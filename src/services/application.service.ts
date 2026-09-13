@@ -233,7 +233,7 @@ export const knowledgeService = {
     form.append("type", "video");
 
     const response = await fetch(
-      `${API_URL}/applications/${idApplication}/knowledge`,
+      `${API_URL}/application-documents/${idApplication}`,
       {
         method: "POST",
         credentials: "include",
@@ -256,9 +256,10 @@ export const knowledgeService = {
     const form = new FormData();
     form.append("file", file);
     form.append("type", "document");
+    form.append("idapplication", idApplication.toString());
 
     const response = await fetch(
-      `${API_URL}/applications/${idApplication}/knowledge`,
+      `${API_URL}/application-documents`,
       {
         method: "POST",
         credentials: "include",

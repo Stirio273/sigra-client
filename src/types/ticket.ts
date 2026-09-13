@@ -7,8 +7,8 @@ export type Ticket = {
   idTicket: number;
   numeroTicket: string;
   dateCreation: string;
-  idApplication: number | null;
-  idCriticite: number | null;
+  application: number | null;
+  criticite: { libelle?: string } | null;
   statut: { libelle?: string } | null;
   technicienAssigne: { email?: string } | null;
   demandeurEmail: string;
