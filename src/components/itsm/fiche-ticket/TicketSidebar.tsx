@@ -288,7 +288,7 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
           <CardTitle className="text-sm font-medium">Actions</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-xs">
-          <span className="text-muted-foreground">Fermer le ticket</span>
+          {/* <span className="text-muted-foreground">Fermer le ticket</span> */}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger
               render={
@@ -522,18 +522,23 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
                   </DialogDescription>
                   <div className="space-y-3">
                     <Select
-                      value={selectedTechnician ? String(selectedTechnician.idUtilisateur) : ""}
+                      value={selectedTechnician ? String(selectedTechnician.userGuid) : ""}
                       onValueChange={(value) => {
-                        const tech = technicians.find((t) => String(t.idUtilisateur) === value) || null
+                        const tech = technicians.find((t) => String(t.userGuid) === value) || null
                         setSelectedTechnician(tech)
                       }}
                     >
                       <SelectTrigger size="sm" className="w-full">
-                        <SelectValue placeholder="Choisir un technicien" />
+                        <SelectValue placeholder="Choisir un technicien">
+                          {(value) => {
+                            const tech = technicians.find((t) => String(t.userGuid) === value)
+                            return tech ? (tech.prenom ? `${tech.prenom} ${tech.nom}` : tech.nom) : "Choisir un technicien"
+                          }}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {technicians.map((tech) => (
-                          <SelectItem key={tech.idUtilisateur} value={String(tech.idUtilisateur)}>
+                          <SelectItem key={tech.userGuid} value={String(tech.userGuid)}>
                             {tech.prenom ? `${tech.prenom} ${tech.nom}` : tech.nom}
                           </SelectItem>
                         ))}

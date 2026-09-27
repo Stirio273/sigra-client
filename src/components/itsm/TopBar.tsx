@@ -85,7 +85,16 @@ function TopBar() {
           render={<NotificationBell unreadCount={unreadCount} onClick={() => {}} />}
         />
         <Avatar>
-          <AvatarFallback className="bg-muted text-muted-foreground">JD</AvatarFallback>
+          <AvatarFallback className="bg-muted text-muted-foreground">
+            {user?.user
+              ? user.user
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2)
+              : user?.user?.charAt(0).toUpperCase() ?? '?'}
+          </AvatarFallback>
         </Avatar>
       </div>
     </div>

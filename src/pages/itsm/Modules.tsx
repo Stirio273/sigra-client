@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Upload, FileVideo, FileText, Trash2, Loader2 } from "lucide-react";
+import { Upload, FileVideo, FileText, Trash2, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,24 +29,6 @@ import {
 } from "@/services/application.service";
 import type { Application, KnowledgeFile } from "@/types/application";
 
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 octets";
-  const k = 1024;
-  const sizes = ["octets", "Ko", "Mo", "Go"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-};
-
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
 const VIDEO_ACCEPT = ".mp4,.mov,.avi,.mkv,.webm,video/*";
 const DOCUMENT_ACCEPT = ".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
@@ -58,6 +40,8 @@ export default function Modules() {
   const [loadingApps, setLoadingApps] = useState(true);
   const [loadingKnowledge, setLoadingKnowledge] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [videosError, setVideosError] = useState<string | null>(null);
+  const [documentsError, setDocumentsError] = useState<string | null>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -88,14 +72,26 @@ export default function Modules() {
     try {
       setLoadingKnowledge(true);
       setError(null);
-      const [vids, docs] = await Promise.all([
+      setVideosError(null);
+      setDocumentsError(null);
+      const [vidsResult, docsResult] = await Promise.allSettled([
         knowledgeService.getVideos(selectedAppId),
         knowledgeService.getDocuments(selectedAppId),
       ]);
-      setVideos(vids);
-      setDocuments(docs);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "KNOWLEDGE_LOAD_FAILED");
+      if (vidsResult.status === "fulfilled") {
+        setVideos(vidsResult.value);
+      } else {
+        setVideosError(vidsResult.reason instanceof Error ? vidsResult.reason.message : "VIDEOS_FETCH_FAILED");
+        setVideos([]);
+      }
+      if (docsResult.status === "fulfilled") {
+        setDocuments(docsResult.value);
+      } else {
+        setDocumentsError(docsResult.reason instanceof Error ? docsResult.reason.message : "DOCUMENTS_FETCH_FAILED");
+        setDocuments([]);
+      }
+    } catch {
+      setError("KNOWLEDGE_LOAD_FAILED");
     } finally {
       setLoadingKnowledge(false);
     }
@@ -111,6 +107,8 @@ export default function Modules() {
     } else {
       setVideos([]);
       setDocuments([]);
+      setVideosError(null);
+      setDocumentsError(null);
     }
   }, [selectedAppId, loadKnowledge]);
 
@@ -318,6 +316,8 @@ export default function Modules() {
                       <Loader2 className="size-4 animate-spin" />
                       Chargement des vidéos...
                     </div>
+                  ) : videosError ? (
+                    <p className="text-sm text-red-600">Impossible de charger les vidéos : {videosError}</p>
                   ) : (
                     <div className="space-y-2">
                       {videos.length === 0 ? (
@@ -334,11 +334,10 @@ export default function Modules() {
                               <FileVideo className="size-4 text-muted-foreground" />
                               <div className="space-y-0.5">
                                 <p className="text-sm font-medium">
-                                  {video.nom}
+                                  {video.nomFichier}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {formatFileSize(video.taille)} •{" "}
-                                  {formatDate(video.dateUpload)}
+                                  {video.applicationName} • Chunks: {video.chunkCount}
                                 </p>
                               </div>
                             </div>
@@ -346,6 +345,14 @@ export default function Modules() {
                               <Badge variant="secondary" className="text-xs">
                                 Vidéo
                               </Badge>
+                              <a
+                                href={video.chemin}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex size-7 items-center justify-center rounded-none hover:bg-muted"
+                              >
+                                <Download className="size-4" />
+                              </a>
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
@@ -418,6 +425,8 @@ export default function Modules() {
                       <Loader2 className="size-4 animate-spin" />
                       Chargement des documents...
                     </div>
+                  ) : documentsError ? (
+                    <p className="text-sm text-red-600">Impossible de charger les documents : {documentsError}</p>
                   ) : (
                     <div className="space-y-2">
                       {documents.length === 0 ? (
@@ -434,11 +443,10 @@ export default function Modules() {
                               <FileText className="size-4 text-muted-foreground" />
                               <div className="space-y-0.5">
                                 <p className="text-sm font-medium">
-                                  {doc.nom}
+                                  {doc.nomFichier}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {formatFileSize(doc.taille)} •{" "}
-                                  {formatDate(doc.dateUpload)}
+                                  {doc.applicationName} • Chunks: {doc.chunkCount}
                                 </p>
                               </div>
                             </div>
@@ -446,6 +454,14 @@ export default function Modules() {
                               <Badge variant="secondary" className="text-xs">
                                 Document
                               </Badge>
+                              <a
+                                href={doc.chemin}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex size-7 items-center justify-center rounded-none hover:bg-muted"
+                              >
+                                <Download className="size-4" />
+                              </a>
                               <Button
                                 variant="ghost"
                                 size="icon-sm"

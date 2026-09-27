@@ -298,7 +298,7 @@ export const knowledgeService = {
     idApplication: number
   ): Promise<KnowledgeFile[]> => {
     const response = await fetch(
-      `${API_URL}/applications/${idApplication}/knowledge?type=document`,
+      `${API_URL}/application-documents/${idApplication}`,
       {
         method: "GET",
         credentials: "include",

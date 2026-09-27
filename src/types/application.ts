@@ -7,10 +7,12 @@ export type Application = {
 
 export type KnowledgeFile = {
   id: number;
-  nom: string;
-  type: "video" | "document";
-  taille: number;
-  dateUpload: string;
+  titre: string;
+  nomFichier: string;
+  chemin: string;
+  idApplication: number;
+  applicationName: string;
+  chunkCount: number;
 };
 
 export type ClasseService = {

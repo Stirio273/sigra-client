@@ -301,54 +301,54 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, 
   )
 }
 
-function RightPanel() {
-  return (
-    <aside className="w-80 pl-6 space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Créer un Ticket (Quick)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Input placeholder="Nom du demandeur" />
-          <Select>
-            <SelectTrigger>
-              <SelectValue placeholder="Departement" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="site">Site A</SelectItem>
-            </SelectContent>
-          </Select>
-          <textarea placeholder="Description" className="w-full border rounded px-2 py-1.5 text-sm min-h-[80px]" />
-          <Button className="w-full">
-            <Plus size={16} className="mr-2" />
-            Créer
-          </Button>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Recent Items</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2 text-sm">
-            <li className="flex items-center justify-between">
-              <span>file_nameEU_2913</span>
-              <span className="text-xs text-muted-foreground">5.32 mb</span>
-            </li>
-            <li className="flex items-center justify-between">
-              <span>file_nameEU_2913</span>
-              <span className="text-xs text-muted-foreground">5.32 mb</span>
-            </li>
-            <li className="flex items-center justify-between">
-              <span>file_nameEU_2913</span>
-              <span className="text-xs text-muted-foreground">5.32 mb</span>
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
-    </aside>
-  )
-}
+// function RightPanel() {
+//   return (
+//     <aside className="w-80 pl-6 space-y-4">
+//       <Card>
+//         <CardHeader>
+//           <CardTitle className="text-base">Créer un Ticket (Quick)</CardTitle>
+//         </CardHeader>
+//         <CardContent className="space-y-3">
+//           <Input placeholder="Nom du demandeur" />
+//           <Select>
+//             <SelectTrigger>
+//               <SelectValue placeholder="Departement" />
+//             </SelectTrigger>
+//             <SelectContent>
+//               <SelectItem value="site">Site A</SelectItem>
+//             </SelectContent>
+//           </Select>
+//           <textarea placeholder="Description" className="w-full border rounded px-2 py-1.5 text-sm min-h-[80px]" />
+//           <Button className="w-full">
+//             <Plus size={16} className="mr-2" />
+//             Créer
+//           </Button>
+//         </CardContent>
+//       </Card>
+//       <Card>
+//         <CardHeader>
+//           <CardTitle className="text-base">Recent Items</CardTitle>
+//         </CardHeader>
+//         <CardContent>
+//           <ul className="space-y-2 text-sm">
+//             <li className="flex items-center justify-between">
+//               <span>file_nameEU_2913</span>
+//               <span className="text-xs text-muted-foreground">5.32 mb</span>
+//             </li>
+//             <li className="flex items-center justify-between">
+//               <span>file_nameEU_2913</span>
+//               <span className="text-xs text-muted-foreground">5.32 mb</span>
+//             </li>
+//             <li className="flex items-center justify-between">
+//               <span>file_nameEU_2913</span>
+//               <span className="text-xs text-muted-foreground">5.32 mb</span>
+//             </li>
+//           </ul>
+//         </CardContent>
+//       </Card>
+//     </aside>
+//   )
+// }
 
 export default function Dashboard() {
   const [data, setData] = useState<PaginatedResponse<Ticket> | null>(null)

@@ -2,7 +2,7 @@
 
 export interface User {
   userGuid: string;
-  username: string;
+  user: string;
   isAuthenticated: boolean;
   role: string;
 }
