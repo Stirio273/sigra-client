@@ -314,11 +314,10 @@ export const knowledgeService = {
   },
 
   deleteKnowledge: async (
-    idApplication: number,
     idKnowledge: number
   ): Promise<void> => {
     const response = await fetch(
-      `${API_URL}/applications/${idApplication}/knowledge/${idKnowledge}`,
+      `${API_URL}/application-documents/${idKnowledge}`,
       {
         method: "DELETE",
         credentials: "include",
@@ -329,6 +328,23 @@ export const knowledgeService = {
     if (!response.ok) {
       throw new Error("KNOWLEDGE_DELETE_FAILED");
     }
+  },
+
+  download: async (url: string): Promise<Blob> => {
+    const response = await fetch(
+      `${url}`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: buildHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("KNOWLEDGE_DOWNLOAD_FAILED");
+    }
+
+    return response.blob();
   },
 };
 

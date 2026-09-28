@@ -175,7 +175,7 @@ export default function Modules() {
   const handleDelete = async (id: number, type: "video" | "document") => {
     if (!selectedAppId) return;
     try {
-      await knowledgeService.deleteKnowledge(selectedAppId, id);
+      await knowledgeService.deleteKnowledge(id);
       if (type === "video") {
         setVideos((prev) => prev.filter((v) => v.id !== id));
       } else {
@@ -183,6 +183,22 @@ export default function Modules() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "DELETE_FAILED");
+    }
+  };
+
+  const handleDownload = async (item: KnowledgeFile) => {
+    try {
+      const blob = await knowledgeService.download(item.chemin);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = item.nomFichier;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setError("Téléchargement impossible.");
     }
   };
 
@@ -345,14 +361,13 @@ export default function Modules() {
                               <Badge variant="secondary" className="text-xs">
                                 Vidéo
                               </Badge>
-                              <a
-                                href={video.chemin}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex size-7 items-center justify-center rounded-none hover:bg-muted"
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => handleDownload(video)}
                               >
                                 <Download className="size-4" />
-                              </a>
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
@@ -454,14 +469,13 @@ export default function Modules() {
                               <Badge variant="secondary" className="text-xs">
                                 Document
                               </Badge>
-                              <a
-                                href={doc.chemin}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex size-7 items-center justify-center rounded-none hover:bg-muted"
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => handleDownload(doc)}
                               >
                                 <Download className="size-4" />
-                              </a>
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
