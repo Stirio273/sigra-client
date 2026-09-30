@@ -40,12 +40,14 @@ type FormState = {
   libelle: string;
   actif: boolean;
   idCs: number;
+  estDeveloppeInterne: boolean;
 };
 
 const emptyForm: FormState = {
   libelle: "",
   actif: true,
   idCs: 0,
+  estDeveloppeInterne: false,
 };
 
 export default function ApplicationsTab() {
@@ -97,6 +99,7 @@ export default function ApplicationsTab() {
       libelle: app.libelle,
       actif: app.actif,
       idCs: app.idCs,
+      estDeveloppeInterne: app.estDeveloppeInterne,
     });
     setSubmitError(null);
     setFormOpen(true);
@@ -123,12 +126,14 @@ export default function ApplicationsTab() {
           libelle: form.libelle.trim(),
           actif: form.actif,
           idCs: form.idCs,
+          estDeveloppeInterne: form.estDeveloppeInterne,
         });
       } else {
         await applicationService.create({
           libelle: form.libelle.trim(),
           actif: form.actif,
           idCs: form.idCs,
+          estDeveloppeInterne: form.estDeveloppeInterne,
         });
       }
       setFormOpen(false);
@@ -186,22 +191,23 @@ export default function ApplicationsTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Libellé</TableHead>
-                  <TableHead>Classe de service</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="w-28 text-right">Actions</TableHead>
+              <TableHead>Libellé</TableHead>
+              <TableHead>Classe de service</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Développement interne</TableHead>
+              <TableHead className="w-28 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {applications.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="text-center text-sm text-muted-foreground"
-                    >
-                      Aucune application trouvée.
-                    </TableCell>
-                  </TableRow>
+                  {applications.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-sm text-muted-foreground"
+                      >
+                        Aucune application trouvée.
+                      </TableCell>
+                    </TableRow>
                 ) : (
                   applications.map((app) => (
                     <TableRow key={app.idApplication} className="hover:bg-muted/50">
@@ -214,6 +220,7 @@ export default function ApplicationsTab() {
                           {app.actif ? "Actif" : "Inactif"}
                         </Badge>
                       </TableCell>
+                      <TableCell>{app.estDeveloppeInterne ? "Oui" : "Non"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
@@ -307,6 +314,21 @@ export default function ApplicationsTab() {
               />
               <Label htmlFor="actif" className="text-sm">
                 Actif
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="estDeveloppeInterne"
+                checked={form.estDeveloppeInterne}
+                onCheckedChange={(checked) =>
+                  setForm((f) => ({
+                    ...f,
+                    estDeveloppeInterne: checked === true,
+                  }))
+                }
+              />
+              <Label htmlFor="estDeveloppeInterne" className="text-sm">
+                Développement interne
               </Label>
             </div>
             {submitError && (

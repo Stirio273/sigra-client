@@ -3,6 +3,7 @@ export type Application = {
   libelle: string;
   actif: boolean;
   idCs: number;
+  estDeveloppeInterne: boolean;
 };
 
 export type KnowledgeFile = {

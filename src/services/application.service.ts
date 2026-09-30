@@ -52,6 +52,7 @@ export const applicationService = {
     libelle: string;
     actif: boolean;
     idCs: number;
+    estDeveloppeInterne: boolean;
   }): Promise<Application> => {
     const response = await fetch(`${API_URL}/applications`, {
       method: "POST",
@@ -73,6 +74,7 @@ export const applicationService = {
       libelle: string;
       actif: boolean;
       idCs: number;
+      estDeveloppeInterne: boolean;
     }
   ): Promise<Application> => {
     const response = await fetch(`${API_URL}/applications/${idApplication}`, {
