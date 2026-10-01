@@ -332,9 +332,9 @@ export const knowledgeService = {
     }
   },
 
-  download: async (url: string): Promise<Blob> => {
+  download: async (idKnowledge: number): Promise<Blob> => {
     const response = await fetch(
-      `${url}`,
+      `${API_URL}/application-documents/download/${idKnowledge}`,
       {
         method: "GET",
         credentials: "include",

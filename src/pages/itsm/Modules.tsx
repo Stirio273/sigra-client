@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Upload, FileVideo, FileText, Trash2, Loader2, Download } from "lucide-react";
+import { Upload, FileText, Trash2, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,24 +29,23 @@ import {
 } from "@/services/application.service";
 import type { Application, KnowledgeFile } from "@/types/application";
 
-const VIDEO_ACCEPT = ".mp4,.mov,.avi,.mkv,.webm,video/*";
+// const VIDEO_ACCEPT = ".mp4,.mov,.avi,.mkv,.webm,video/*";
 const DOCUMENT_ACCEPT = ".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 export default function Modules() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [selectedAppId, setSelectedAppId] = useState<number | null>(null);
-  const [videos, setVideos] = useState<KnowledgeFile[]>([]);
   const [documents, setDocuments] = useState<KnowledgeFile[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
   const [loadingKnowledge, setLoadingKnowledge] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [videosError, setVideosError] = useState<string | null>(null);
+  // const [videosError, setVideosError] = useState<string | null>(null);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
+  // const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const videoInputRef = useRef<HTMLInputElement>(null);
+  // const videoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
   const selectedApp = applications.find((a) => a.idApplication === selectedAppId) ?? null;
@@ -72,18 +71,18 @@ export default function Modules() {
     try {
       setLoadingKnowledge(true);
       setError(null);
-      setVideosError(null);
+      // setVideosError(null);
       setDocumentsError(null);
-      const [vidsResult, docsResult] = await Promise.allSettled([
-        knowledgeService.getVideos(selectedAppId),
+      const [/* vidsResult, */ docsResult] = await Promise.allSettled([
+        // knowledgeService.getVideos(selectedAppId),
         knowledgeService.getDocuments(selectedAppId),
       ]);
-      if (vidsResult.status === "fulfilled") {
-        setVideos(vidsResult.value);
-      } else {
-        setVideosError(vidsResult.reason instanceof Error ? vidsResult.reason.message : "VIDEOS_FETCH_FAILED");
-        setVideos([]);
-      }
+      // if (vidsResult.status === "fulfilled") {
+      //   setVideos(vidsResult.value);
+      // } else {
+      //   setVideosError(vidsResult.reason instanceof Error ? vidsResult.reason.message : "VIDEOS_FETCH_FAILED");
+      //   setVideos([]);
+      // }
       if (docsResult.status === "fulfilled") {
         setDocuments(docsResult.value);
       } else {
@@ -105,38 +104,38 @@ export default function Modules() {
     if (selectedAppId) {
       loadKnowledge();
     } else {
-      setVideos([]);
       setDocuments([]);
-      setVideosError(null);
+      // setVideos([]);
       setDocumentsError(null);
+      // setVideosError(null);
     }
   }, [selectedAppId, loadKnowledge]);
 
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !selectedAppId) return;
+  // const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file || !selectedAppId) return;
 
-    if (!file.type.startsWith("video/")) {
-      setUploadError("Veuillez sélectionner un fichier vidéo.");
-      return;
-    }
+  //   if (!file.type.startsWith("video/")) {
+  //     setUploadError("Veuillez sélectionner un fichier vidéo.");
+  //     return;
+  //   }
 
-    try {
-      setUploadingVideo(true);
-      setUploadError(null);
-      const uploaded = await knowledgeService.uploadVideo(selectedAppId, file);
-      setVideos((prev) => [...prev, uploaded]);
-    } catch (err) {
-      setUploadError(
-        err instanceof Error ? err.message : "VIDEO_UPLOAD_FAILED"
-      );
-    } finally {
-      setUploadingVideo(false);
-      if (videoInputRef.current) {
-        videoInputRef.current.value = "";
-      }
-    }
-  };
+  //   try {
+  //     setUploadingVideo(true);
+  //     setUploadError(null);
+  //     const uploaded = await knowledgeService.uploadVideo(selectedAppId, file);
+  //     setVideos((prev) => [...prev, uploaded]);
+  //   } catch (err) {
+  //     setUploadError(
+  //       err instanceof Error ? err.message : "VIDEO_UPLOAD_FAILED"
+  //     );
+  //   } finally {
+  //     setUploadingVideo(false);
+  //     if (videoInputRef.current) {
+  //       videoInputRef.current.value = "";
+  //     }
+  //   }
+  // };
 
   const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -158,8 +157,8 @@ export default function Modules() {
     try {
       setUploadingDoc(true);
       setUploadError(null);
-      const uploaded = await knowledgeService.uploadDocument(selectedAppId, file);
-      setDocuments((prev) => [...prev, uploaded]);
+      await knowledgeService.uploadDocument(selectedAppId, file);
+      await loadKnowledge();
     } catch (err) {
       setUploadError(
         err instanceof Error ? err.message : "DOCUMENT_UPLOAD_FAILED"
@@ -177,7 +176,7 @@ export default function Modules() {
     try {
       await knowledgeService.deleteKnowledge(id);
       if (type === "video") {
-        setVideos((prev) => prev.filter((v) => v.id !== id));
+        // setVideos((prev) => prev.filter((v) => v.id !== id));
       } else {
         setDocuments((prev) => prev.filter((d) => d.id !== id));
       }
@@ -188,7 +187,7 @@ export default function Modules() {
 
   const handleDownload = async (item: KnowledgeFile) => {
     try {
-      const blob = await knowledgeService.download(item.chemin);
+      const blob = await knowledgeService.download(item.id);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -271,13 +270,13 @@ export default function Modules() {
         )}
 
         {selectedApp && (
-          <Tabs defaultValue="videos" className="space-y-4">
+          <Tabs defaultValue="documents" className="space-y-4">
             <TabsList variant="line">
-              <TabsTrigger value="videos">Vidéos de formation</TabsTrigger>
+              {/* <TabsTrigger value="videos">Vidéos de formation</TabsTrigger> */}
               <TabsTrigger value="documents">Documentation</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="videos" className="space-y-4">
+            {/* <TabsContent value="videos" className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
@@ -383,7 +382,7 @@ export default function Modules() {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+            </TabsContent> */}
 
             <TabsContent value="documents" className="space-y-4">
               <Card>
