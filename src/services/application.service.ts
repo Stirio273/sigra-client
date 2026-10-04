@@ -88,7 +88,18 @@ export const applicationService = {
       throw new Error("APPLICATION_UPDATE_FAILED");
     }
 
-    return response.json();
+    const text = await response.text();
+    if (!text) {
+      return {
+        idApplication,
+        libelle: data.libelle,
+        actif: data.actif,
+        idCs: data.idCs,
+        estDeveloppeInterne: data.estDeveloppeInterne,
+      };
+    }
+
+    return JSON.parse(text) as Application;
   },
 
   delete: async (idApplication: number): Promise<void> => {

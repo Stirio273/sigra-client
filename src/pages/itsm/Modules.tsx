@@ -147,7 +147,7 @@ export default function Modules() {
       "application/msword",
     ];
     const fileName = file.name.toLowerCase();
-    const validExtension = fileName.endsWith(".pdf") || fileName.endsWith(".docx") || fileName.endsWith(".doc");
+    const validExtension = fileName.endsWith(".pdf") || fileName.endsWith(".docx") || fileName.endsWith(".doc") || fileName.endsWith(".rst");
 
     if (!validTypes.includes(file.type) && !validExtension) {
       setUploadError("Veuillez sélectionner un document PDF ou DOCX.");

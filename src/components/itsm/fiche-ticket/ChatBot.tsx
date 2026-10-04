@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef, type SubmitEvent } from "react"
-import { MessageSquare, Bot, Send } from "lucide-react"
+import { MessageSquare, Bot, User, Send } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { sendChatMessage } from "@/services/chatbot.service"
 
 interface ChatMessage {
@@ -20,6 +21,10 @@ interface ChatMessage {
 
 interface ChatBotProps {
   ticketId?: number
+}
+
+function normalizeOrderedListMarkdown(markdown: string): string {
+  return markdown.replace(/(\d+)\.\s*\n\s*\n(?=\d+\.)/g, "$1.\n")
 }
 
 export function ChatBot({ ticketId }: ChatBotProps) {
@@ -84,40 +89,58 @@ export function ChatBot({ ticketId }: ChatBotProps) {
     <>
       <Button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 size-12 rounded-full shadow-lg z-40"
+        className="fixed bottom-6 right-6 size-14 rounded-full shadow-lg z-40"
         size="icon-lg"
       >
-        <MessageSquare className="size-5" />
+        <MessageSquare className="size-6" />
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-full max-w-2xl p-0 gap-0">
-          <div className="flex flex-col h-[70vh]">
-            <DialogHeader className="px-4 py-3 border-b">
-              <DialogTitle className="flex items-center gap-2 text-sm font-medium">
-                <Bot className="size-4" />
-                Assistant IA
-              </DialogTitle>
-            </DialogHeader>
+        <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-7xl h-[90vh] p-0 gap-0 flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b flex flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Avatar size="lg">
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  <Bot className="size-5" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <DialogTitle className="text-base font-semibold">
+                  Assistant IA
+                </DialogTitle>
+              </div>
+            </div>
+          </DialogHeader>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto px-6 py-4"
+          >
+            <div className="space-y-6">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
+                  {msg.role === "assistant" && (
+                    <Avatar size="default">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        <Bot className="size-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <div
-                    className={`max-w-[80%] px-3 py-2 text-xs leading-relaxed ${
+                    className={`max-w-[80%] px-4 py-3 text-sm leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-primary text-primary-foreground rounded-none"
-                        : "bg-muted text-foreground rounded-none"
+                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
+                        : "bg-muted text-foreground rounded-2xl rounded-tl-sm"
                     }`}
                   >
                     {msg.role === "assistant" ? (
                       <ReactMarkdown
                         components={{
                           p: ({ children }) => (
-                            <p className="mb-2 last:mb-0 text-xs leading-relaxed">{children}</p>
+                            <p className="mb-2 last:mb-0 text-sm leading-relaxed">{children}</p>
                           ),
                           ul: ({ children }) => (
                             <ul className="list-disc pl-4 mb-2 last:mb-0 space-y-1">{children}</ul>
@@ -160,36 +183,49 @@ export function ChatBot({ ticketId }: ChatBotProps) {
                           ),
                         }}
                       >
-                        {msg.content}
+                        {normalizeOrderedListMarkdown(msg.content)}
                       </ReactMarkdown>
                     ) : (
                       msg.content
                     )}
                   </div>
+                  {msg.role === "user" && (
+                    <Avatar size="default">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        <User className="size-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
               ))}
               {sending && (
-                <div className="flex justify-start">
-                  <div className="bg-muted text-foreground px-3 py-2 text-xs rounded-none">
+                <div className="flex gap-3 justify-start">
+                  <Avatar size="default">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      <Bot className="size-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="bg-muted text-foreground px-4 py-3 text-sm rounded-2xl rounded-tl-sm">
                     ...
                   </div>
                 </div>
               )}
             </div>
-
-            <form onSubmit={handleSubmit} className="px-4 py-3 border-t flex items-center gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Écrivez un message..."
-                disabled={sending}
-                className="flex-1"
-              />
-              <Button type="submit" size="sm" disabled={sending || !input.trim()}>
-                <Send className="size-3.5" />
-              </Button>
-            </form>
           </div>
+
+          <form onSubmit={handleSubmit} className="px-6 py-4 border-t flex items-end gap-3">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Écrivez un message..."
+              disabled={sending}
+              className="flex-1 min-h-[44px] max-h-[200px] resize-none text-sm"
+              rows={1}
+            />
+            <Button type="submit" size="icon-lg" disabled={sending || !input.trim()} className="h-11 w-11">
+              <Send className="size-5" />
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
     </>
