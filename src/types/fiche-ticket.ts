@@ -13,6 +13,7 @@ export type TicketMetadata = {
   assignedTo: string | null
   application: string
   criticite: string
+  actionsDisponibles?: string[]
 }
 
 export type EmailMessage = {

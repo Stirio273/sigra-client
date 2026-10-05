@@ -90,6 +90,9 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
   const [note, setNote] = useState("")
   const [noteSubmitting, setNoteSubmitting] = useState(false)
 
+  const availableActions = ticket.actionsDisponibles ?? []
+  const hasAction = (code: string) => availableActions.includes(code)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
@@ -288,223 +291,232 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
           <CardTitle className="text-sm font-medium">Actions</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-xs">
-          {/* <span className="text-muted-foreground">Fermer le ticket</span> */}
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger
-              render={
-                <span className="text-muted-foreground cursor-pointer hover:text-foreground">
-                  Invalider le ticket
-                </span>
-              }
-              nativeButton={false}
-            />
-            <DialogContent className="w-full max-w-md">
-              <DialogTitle className="text-sm font-medium mb-2">
-                Invalider le ticket {ticket.numeroTicket}
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground mb-3">
-                Fournissez un justificatif pour cette invalidation.
-              </DialogDescription>
-              <form onSubmit={handleSubmit} className="space-y-3">
-                <textarea
-                  value={justificatif}
-                  onChange={(e) => setJustificatif(e.target.value)}
-                  placeholder="Justificatif..."
-                  className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
-                  required
-                />
-                <div className="flex justify-end gap-2">
-                  <DialogClose
-                    render={
-                      <Button variant="outline" size="sm" type="button">
-                        Annuler
-                      </Button>
-                    }
+          <span className="text-muted-foreground">Fermer le ticket</span>
+          {hasAction("AskForReject") && (
+            <Dialog key="ask-for-reject" open={open} onOpenChange={setOpen}>
+              <DialogTrigger
+                render={
+                  <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                    Invalider le ticket
+                  </span>
+                }
+                nativeButton={false}
+              />
+              <DialogContent className="w-full max-w-md">
+                <DialogTitle className="text-sm font-medium mb-2">
+                  Invalider le ticket {ticket.numeroTicket}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mb-3">
+                  Fournissez un justificatif pour cette invalidation.
+                </DialogDescription>
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <textarea
+                    value={justificatif}
+                    onChange={(e) => setJustificatif(e.target.value)}
+                    placeholder="Justificatif..."
+                    className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
+                    required
                   />
-                  <Button type="submit" size="sm" disabled={submitting}>
-                    {submitting ? "Envoi..." : "Soumettre"}
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    <DialogClose
+                      render={
+                        <Button variant="outline" size="sm" type="button">
+                          Annuler
+                        </Button>
+                      }
+                    />
+                    <Button type="submit" size="sm" disabled={submitting}>
+                      {submitting ? "Envoi..." : "Soumettre"}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
+          {hasAction("ModifyApplication") && (
+            <Dialog key="modify-application" open={appOpen} onOpenChange={setAppOpen}>
+              <DialogTrigger
+                render={
+                  <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                    Modifier l'application
+                  </span>
+                }
+                nativeButton={false}
+              />
+              <DialogContent className="w-full max-w-md">
+                <DialogTitle className="text-sm font-medium mb-2">
+                  Indiquer l'application
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mb-3">
+                  Sélectionnez une nouvelle application pour ce ticket.
+                </DialogDescription>
+                <div className="space-y-3">
+                  <Select
+                    value={selectedApplication !== null ? String(selectedApplication) : ""}
+                    onValueChange={(value) => setSelectedApplication(Number(value))}
+                  >
+                    <SelectTrigger size="sm" className="w-full">
+                      <SelectValue placeholder="Sélectionner une application">
+                        {(value) => {
+                          const app = applications.find((a) => String(a.idApplication) === value)
+                          return app ? app.libelle : "Sélectionner une application"
+                        }}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {applications.map((app) => (
+                        <SelectItem key={app.idApplication} value={String(app.idApplication)}>
+                          {app.libelle}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex justify-end gap-2">
+                    <DialogClose
+                      render={
+                        <Button variant="outline" size="sm" type="button">
+                          Annuler
+                        </Button>
+                      }
+                      nativeButton={false}
+                    />
+                    <Button size="sm" onClick={handleApplicationUpdate} disabled={appSubmitting || selectedApplication === null}>
+                      {appSubmitting ? "Envoi..." : "Enregistrer"}
+                    </Button>
+                  </div>
                 </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <Dialog open={appOpen} onOpenChange={setAppOpen}>
-            <DialogTrigger
-              render={
-                <span className="text-muted-foreground cursor-pointer hover:text-foreground">
-                  Modifier l'application
-                </span>
-              }
-              nativeButton={false}
-            />
-            <DialogContent className="w-full max-w-md">
-              <DialogTitle className="text-sm font-medium mb-2">
-                Indiquer l'application
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground mb-3">
-                Sélectionnez une nouvelle application pour ce ticket.
-              </DialogDescription>
-              <div className="space-y-3">
-                <Select
-                  value={selectedApplication !== null ? String(selectedApplication) : ""}
-                  onValueChange={(value) => setSelectedApplication(Number(value))}
-                >
-                  <SelectTrigger size="sm" className="w-full">
-                    <SelectValue placeholder="Sélectionner une application">
-                      {(value) => {
-                        const app = applications.find((a) => String(a.idApplication) === value)
-                        return app ? app.libelle : "Sélectionner une application"
-                      }}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {applications.map((app) => (
-                      <SelectItem key={app.idApplication} value={String(app.idApplication)}>
-                        {app.libelle}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex justify-end gap-2">
-                  <DialogClose
-                    render={
-                      <Button variant="outline" size="sm" type="button">
-                        Annuler
-                      </Button>
-                    }
-                    nativeButton={false}
-                  />
-                  <Button size="sm" onClick={handleApplicationUpdate} disabled={appSubmitting || selectedApplication === null}>
-                    {appSubmitting ? "Envoi..." : "Enregistrer"}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          <Dialog open={statusOpen} onOpenChange={setStatusOpen}>
-            <DialogTrigger
-              render={
-                <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+              </DialogContent>
+            </Dialog>
+          )}
+          {hasAction("ChangeStatus") && (
+            <Dialog key="change-status" open={statusOpen} onOpenChange={setStatusOpen}>
+              <DialogTrigger
+                render={
+                  <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                    Changer le statut du ticket
+                  </span>
+                }
+                nativeButton={false}
+              />
+              <DialogContent className="w-full max-w-md">
+                <DialogTitle className="text-sm font-medium mb-2">
                   Changer le statut du ticket
-                </span>
-              }
-              nativeButton={false}
-            />
-            <DialogContent className="w-full max-w-md">
-              <DialogTitle className="text-sm font-medium mb-2">
-                Changer le statut du ticket
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground mb-3">
-                Sélectionnez un nouveau statut pour ce ticket.
-              </DialogDescription>
-              <div className="space-y-3">
-                <Select
-                  value={selectedStatusId !== null ? String(selectedStatusId) : ""}
-                  onValueChange={(value) => setSelectedStatusId(Number(value))}
-                >
-                  <SelectTrigger size="sm" className="w-full">
-                    <SelectValue placeholder="Sélectionner un statut">
-                      {(value) => {
-                        const status = statuses.find((s) => String(s.idStatut) === value)
-                        return status ? status.libelle : "Sélectionner un statut"
-                      }}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statuses.map((status) => (
-                      <SelectItem key={status.idStatut} value={String(status.idStatut)}>
-                        {status.libelle}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex justify-end gap-2">
-                  <DialogClose
-                    render={
-                      <Button variant="outline" size="sm" type="button">
-                        Annuler
-                      </Button>
-                    }
-                    nativeButton={false}
-                  />
-                  <Button size="sm" onClick={handleStatusUpdate} disabled={statusSubmitting || selectedStatusId === null}>
-                    {statusSubmitting ? "Envoi..." : "Enregistrer"}
-                  </Button>
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mb-3">
+                  Sélectionnez un nouveau statut pour ce ticket.
+                </DialogDescription>
+                <div className="space-y-3">
+                  <Select
+                    value={selectedStatusId !== null ? String(selectedStatusId) : ""}
+                    onValueChange={(value) => setSelectedStatusId(Number(value))}
+                  >
+                    <SelectTrigger size="sm" className="w-full">
+                      <SelectValue placeholder="Sélectionner un statut">
+                        {(value) => {
+                          const status = statuses.find((s) => String(s.idStatut) === value)
+                          return status ? status.libelle : "Sélectionner un statut"
+                        }}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statuses.map((status) => (
+                        <SelectItem key={status.idStatut} value={String(status.idStatut)}>
+                          {status.libelle}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex justify-end gap-2">
+                    <DialogClose
+                      render={
+                        <Button variant="outline" size="sm" type="button">
+                          Annuler
+                        </Button>
+                      }
+                      nativeButton={false}
+                    />
+                    <Button size="sm" onClick={handleStatusUpdate} disabled={statusSubmitting || selectedStatusId === null}>
+                      {statusSubmitting ? "Envoi..." : "Enregistrer"}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
-            <DialogTrigger
-              render={
-                <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+              </DialogContent>
+            </Dialog>
+          )}
+          {hasAction("Transfer") && (
+            <Dialog key="transfer" open={transferOpen} onOpenChange={setTransferOpen}>
+              <DialogTrigger
+                render={
+                  <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                    Transférer le ticket
+                  </span>
+                }
+                nativeButton={false}
+              />
+              <DialogContent className="w-full max-w-md">
+                <DialogTitle className="text-sm font-medium mb-2">
                   Transférer le ticket
-                </span>
-              }
-              nativeButton={false}
-            />
-            <DialogContent className="w-full max-w-md">
-              <DialogTitle className="text-sm font-medium mb-2">
-                Transférer le ticket
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground mb-3">
-                Sélectionnez une entité externe et fournissez une explication.
-              </DialogDescription>
-              <div className="space-y-3">
-                <Select
-                  value={selectedEntiteExterne !== null ? String(selectedEntiteExterne) : ""}
-                  onValueChange={(value) => setSelectedEntiteExterne(Number(value))}
-                >
-                  <SelectTrigger size="sm" className="w-full">
-                    <SelectValue placeholder="Sélectionner une entité externe">
-                      {(value) => {
-                        const entite = entitesExternes.find((e) => String(e.idEntiteExterne) === value)
-                        return entite ? entite.nom : "Sélectionner une entité externe"
-                      }}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {entitesExternes.map((entite) => (
-                      <SelectItem key={entite.idEntiteExterne} value={String(entite.idEntiteExterne)}>
-                        {entite.nom}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <textarea
-                  value={explication}
-                  onChange={(e) => setExplication(e.target.value)}
-                  placeholder="Explication..."
-                  className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
-                  required
-                />
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="est-definitif"
-                    checked={estDefinitif}
-                    onCheckedChange={(checked) => setEstDefinitif(checked === true)}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mb-3">
+                  Sélectionnez une entité externe et fournissez une explication.
+                </DialogDescription>
+                <div className="space-y-3">
+                  <Select
+                    value={selectedEntiteExterne !== null ? String(selectedEntiteExterne) : ""}
+                    onValueChange={(value) => setSelectedEntiteExterne(Number(value))}
+                  >
+                    <SelectTrigger size="sm" className="w-full">
+                      <SelectValue placeholder="Sélectionner une entité externe">
+                        {(value) => {
+                          const entite = entitesExternes.find((e) => String(e.idEntiteExterne) === value)
+                          return entite ? entite.nom : "Sélectionner une entité externe"
+                        }}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {entitesExternes.map((entite) => (
+                        <SelectItem key={entite.idEntiteExterne} value={String(entite.idEntiteExterne)}>
+                          {entite.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <textarea
+                    value={explication}
+                    onChange={(e) => setExplication(e.target.value)}
+                    placeholder="Explication..."
+                    className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
+                    required
                   />
-                  <label htmlFor="est-definitif" className="text-xs text-foreground cursor-pointer">
-                    Est définitif
-                  </label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="est-definitif"
+                      checked={estDefinitif}
+                      onCheckedChange={(checked) => setEstDefinitif(checked === true)}
+                    />
+                    <label htmlFor="est-definitif" className="text-xs text-foreground cursor-pointer">
+                      Est définitif
+                    </label>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <DialogClose
+                      render={
+                        <Button variant="outline" size="sm" type="button">
+                          Annuler
+                        </Button>
+                      }
+                    />
+                    <Button size="sm" onClick={handleTransfer} disabled={transferSubmitting || selectedEntiteExterne === null}>
+                      {transferSubmitting ? "Envoi..." : "Transférer"}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <DialogClose
-                    render={
-                      <Button variant="outline" size="sm" type="button">
-                        Annuler
-                      </Button>
-                    }
-                  />
-                  <Button size="sm" onClick={handleTransfer} disabled={transferSubmitting || selectedEntiteExterne === null}>
-                    {transferSubmitting ? "Envoi..." : "Transférer"}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-            {isAdmin ? (
-              <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+              </DialogContent>
+            </Dialog>
+          )}
+          {hasAction("Assign") &&
+            (isAdmin ? (
+              <Dialog key="reassign-admin" open={assignOpen} onOpenChange={setAssignOpen}>
                 <DialogTrigger
                   render={
                     <span className="text-muted-foreground cursor-pointer hover:text-foreground">
@@ -562,52 +574,55 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
               </Dialog>
             ) : (
               <span
+                key="reassign-user"
                 className="text-muted-foreground cursor-pointer hover:text-foreground"
                 onClick={handleAssign}
               >
                 S'assigner
               </span>
-            )}
-           <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
-             <DialogTrigger
-               render={
-                 <span className="text-muted-foreground cursor-pointer hover:text-foreground">
-                   Ajouter une note
-                 </span>
-               }
-               nativeButton={false}
-             />
-             <DialogContent className="w-full max-w-md">
-               <DialogTitle className="text-sm font-medium mb-2">
-                 Ajouter une note interne
-               </DialogTitle>
-               <DialogDescription className="text-xs text-muted-foreground mb-3">
-                 Cette note sera ajoutée aux commentaires internes du ticket.
-               </DialogDescription>
-               <form onSubmit={handleAddNote} className="space-y-3">
-                 <textarea
-                   value={note}
-                   onChange={(e) => setNote(e.target.value)}
-                   placeholder="Votre note..."
-                   className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
-                   required
-                 />
-                 <div className="flex justify-end gap-2">
-                   <DialogClose
-                     render={
-                       <Button variant="outline" size="sm" type="button">
-                         Annuler
-                       </Button>
-                     }
-                     nativeButton={false}
-                   />
-                   <Button type="submit" size="sm" disabled={noteSubmitting || !note.trim()}>
-                     {noteSubmitting ? "Envoi..." : "Ajouter"}
-                   </Button>
-                 </div>
-               </form>
-             </DialogContent>
-           </Dialog>
+            ))}
+          {hasAction("AddNote") && (
+            <Dialog key="add-note" open={noteOpen} onOpenChange={setNoteOpen}>
+              <DialogTrigger
+                render={
+                  <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                    Ajouter une note
+                  </span>
+                }
+                nativeButton={false}
+              />
+              <DialogContent className="w-full max-w-md">
+                <DialogTitle className="text-sm font-medium mb-2">
+                  Ajouter une note interne
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mb-3">
+                  Cette note sera ajoutée aux commentaires internes du ticket.
+                </DialogDescription>
+                <form onSubmit={handleAddNote} className="space-y-3">
+                  <textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Votre note..."
+                    className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
+                    required
+                  />
+                  <div className="flex justify-end gap-2">
+                    <DialogClose
+                      render={
+                        <Button variant="outline" size="sm" type="button">
+                          Annuler
+                        </Button>
+                      }
+                      nativeButton={false}
+                    />
+                    <Button type="submit" size="sm" disabled={noteSubmitting || !note.trim()}>
+                      {noteSubmitting ? "Envoi..." : "Ajouter"}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </CardContent>
       </Card>
     </aside>

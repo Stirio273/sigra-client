@@ -43,6 +43,7 @@ function mapTicketMetadata(detail: TicketDetail): TicketMetadata {
     assignedTo: detail.technicienAssigne?.email ?? null,
     application: detail.application?.libelle ?? "Indéterminé",
     criticite: detail.criticite?.libelle ?? "Indéterminé",
+    actionsDisponibles: detail.actionsDisponibles,
   }
 }
 

@@ -94,6 +94,7 @@ export type TicketDetail = Ticket & {
   notifications: unknown[];
   reassignations: unknown[];
   rejet: Rejet | null;
+  actionsDisponibles?: string[];
 };
 
 export type RejetAuteur = {
