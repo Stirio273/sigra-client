@@ -81,6 +81,10 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
 
   const [assignOpen, setAssignOpen] = useState(false)
 
+  const [reassignOpen, setReassignOpen] = useState(false)
+  const [reassignSubmitting, setReassignSubmitting] = useState(false)
+  const [reassignJustification, setReassignJustification] = useState("")
+
   const [statusOpen, setStatusOpen] = useState(false)
   const [statuses, setStatuses] = useState<TicketStatus[]>([])
   const [selectedStatusId, setSelectedStatusId] = useState<number | null>(null)
@@ -89,6 +93,10 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
   const [noteOpen, setNoteOpen] = useState(false)
   const [note, setNote] = useState("")
   const [noteSubmitting, setNoteSubmitting] = useState(false)
+
+  const [closeOpen, setCloseOpen] = useState(false)
+  const [selectedConfidence, setSelectedConfidence] = useState<number | null>(null)
+  const [closeSubmitting, setCloseSubmitting] = useState(false)
 
   const availableActions = ticket.actionsDisponibles ?? []
   const hasAction = (code: string) => availableActions.includes(code)
@@ -201,6 +209,21 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
     }
   }
 
+  const handleReassign = async () => {
+    if (!selectedTechnician || !reassignJustification.trim()) return
+
+    setReassignSubmitting(true)
+    try {
+      await ticketService.reassignTicket([ticket.idTicket], selectedTechnician.userGuid, reassignJustification.trim())
+      setReassignOpen(false)
+      setReassignJustification("")
+    } catch {
+      // handle error
+    } finally {
+      setReassignSubmitting(false)
+    }
+  }
+
   const handleApplicationUpdate = async () => {
     if (selectedApplication === null) return
 
@@ -265,6 +288,21 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
     }
   }
 
+  const handleCloseTicket = async () => {
+    if (selectedConfidence === null) return
+
+    setCloseSubmitting(true)
+    try {
+      await ticketService.closeTicket(ticket.idTicket, selectedConfidence)
+      setCloseOpen(false)
+      setSelectedConfidence(null)
+    } catch {
+      // handle error
+    } finally {
+      setCloseSubmitting(false)
+    }
+  }
+
   return (
     <aside className="w-full lg:w-80 space-y-4">
       <Card>
@@ -291,7 +329,63 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
           <CardTitle className="text-sm font-medium">Actions</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-xs">
-          <span className="text-muted-foreground">Fermer le ticket</span>
+          {hasAction("Close") && (
+            <Dialog key="close-ticket" open={closeOpen} onOpenChange={setCloseOpen}>
+              <DialogTrigger
+                render={
+                  <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                    Fermer le ticket
+                  </span>
+                }
+                nativeButton={false}
+              />
+              <DialogContent className="w-full max-w-md">
+                <DialogTitle className="text-sm font-medium mb-2">
+                  Fermer le ticket {ticket.numeroTicket}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mb-3">
+                  Sélectionnez le niveau de confiance de la cause racine.
+                </DialogDescription>
+                <div className="space-y-3">
+                  <Select
+                    value={selectedConfidence !== null ? String(selectedConfidence) : ""}
+                    onValueChange={(value) => setSelectedConfidence(Number(value))}
+                  >
+                    <SelectTrigger size="sm" className="w-full">
+                      <SelectValue placeholder="Sélectionner un niveau de confiance">
+                        {(value) => {
+                          const labels: Record<string, string> = {
+                            "0": "Inconnu",
+                            "1": "Cause racine identifiée",
+                            "2": "Correction rapide sans cause racine",
+                          }
+                          return labels[value] ?? "Sélectionner un niveau de confiance"
+                        }}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">Inconnu</SelectItem>
+                      <SelectItem value="1">Cause racine identifiée</SelectItem>
+                      <SelectItem value="2">Correction rapide sans cause racine</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex justify-end gap-2">
+                    <DialogClose
+                      render={
+                        <Button variant="outline" size="sm" type="button">
+                          Annuler
+                        </Button>
+                      }
+                      nativeButton={false}
+                    />
+                    <Button size="sm" onClick={handleCloseTicket} disabled={closeSubmitting || selectedConfidence === null}>
+                      {closeSubmitting ? "Fermeture..." : "Fermer"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
           {hasAction("AskForReject") && (
             <Dialog key="ask-for-reject" open={open} onOpenChange={setOpen}>
               <DialogTrigger
@@ -581,7 +675,71 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
                 S'assigner
               </span>
             ))}
-          {hasAction("AddNote") && (
+          {hasAction("Reassign") && (
+            <Dialog key="reassign" open={reassignOpen} onOpenChange={setReassignOpen}>
+              <DialogTrigger
+                render={
+                  <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                    Réassigner
+                  </span>
+                }
+                nativeButton={false}
+              />
+              <DialogContent className="w-full max-w-md">
+                <DialogTitle className="text-sm font-medium mb-2">
+                  Réassigner le ticket {ticket.numeroTicket}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mb-3">
+                  Sélectionnez un technicien et fournissez une justification.
+                </DialogDescription>
+                <div className="space-y-3">
+                  <Select
+                    value={selectedTechnician ? String(selectedTechnician.userGuid) : ""}
+                    onValueChange={(value) => {
+                      const tech = technicians.find((t) => String(t.userGuid) === value) || null
+                      setSelectedTechnician(tech)
+                    }}
+                  >
+                    <SelectTrigger size="sm" className="w-full">
+                      <SelectValue placeholder="Choisir un technicien">
+                        {(value) => {
+                          const tech = technicians.find((t) => String(t.userGuid) === value)
+                          return tech ? (tech.prenom ? `${tech.prenom} ${tech.nom}` : tech.nom) : "Choisir un technicien"
+                        }}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {technicians.map((tech) => (
+                        <SelectItem key={tech.userGuid} value={String(tech.userGuid)}>
+                          {tech.prenom ? `${tech.prenom} ${tech.nom}` : tech.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <textarea
+                    value={reassignJustification}
+                    onChange={(e) => setReassignJustification(e.target.value)}
+                    placeholder="Justification..."
+                    className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
+                    required
+                  />
+                  <div className="flex justify-end gap-2">
+                    <DialogClose
+                      render={
+                        <Button variant="outline" size="sm" type="button">
+                          Annuler
+                        </Button>
+                      }
+                      nativeButton={false}
+                    />
+                    <Button size="sm" onClick={handleReassign} disabled={reassignSubmitting || !selectedTechnician || !reassignJustification.trim()}>
+                      {reassignSubmitting ? "Envoi..." : "Réassigner"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
             <Dialog key="add-note" open={noteOpen} onOpenChange={setNoteOpen}>
               <DialogTrigger
                 render={
@@ -622,7 +780,6 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
                 </form>
               </DialogContent>
             </Dialog>
-          )}
         </CardContent>
       </Card>
     </aside>

@@ -227,6 +227,32 @@ export const ticketService = {
     }
   },
 
+  closeTicket: async (idTicket: number, rootCauseConfidence: number): Promise<void> => {
+    const response = await fetch(`${API_URL}/tickets/${idTicket}/close`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: buildHeaders(),
+      body: JSON.stringify({ rootCauseConfidence }),
+    });
+
+    if (!response.ok) {
+      throw new Error('TICKET_CLOSE_FAILED');
+    }
+  },
+
+  reassignTicket: async (ticketIds: number[], userGuid: string, justification: string): Promise<void> => {
+    const response = await fetch(`${API_URL}/tickets/reassign`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: buildHeaders(),
+      body: JSON.stringify({ ticketIds, userGuid, justification }),
+    });
+
+    if (!response.ok) {
+      throw new Error('TICKET_REASSIGN_FAILED');
+    }
+  },
+
   transferTicket: async (idTicket: number, data: { identiteexterne: number; explication: string; estDefinitif: boolean }): Promise<void> => {
     const response = await fetch(`${API_URL}/tickets/${idTicket}/transfer`, {
       method: 'POST',
