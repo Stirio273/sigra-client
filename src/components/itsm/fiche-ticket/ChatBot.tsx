@@ -65,6 +65,7 @@ export function ChatBot({ ticketId }: ChatBotProps) {
 
     try {
       const reply = await sendChatMessage({ message: text, ticketId })
+      console.log(JSON.stringify(reply))
       const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: "assistant",

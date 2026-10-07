@@ -1,12 +1,11 @@
 import { useEffect, useState, useContext } from "react"
 import { Link } from "react-router-dom"
-import { FileText, Plus, Settings2, UserCheck, UserPlus } from "lucide-react"
+import { FileText, Plus, Settings2, UserCheck, UserPlus, CircleDot, Play, Pause, ArrowUpRight, AlertTriangle, Check, Lock, Archive } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Select,
@@ -59,6 +58,88 @@ function mapTicket(t: Ticket): TicketRow {
     dateCreation: t.dateCreation,
     criticite: t.criticite?.libelle || null,
   }
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const normalized = status.trim()
+
+  if (normalized === "Nouveau") {
+    return (
+      <span className="inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
+        <CircleDot size={12} />
+        {normalized}
+      </span>
+    )
+  }
+
+  if (normalized === "En cours") {
+    return (
+      <span className="inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground whitespace-nowrap">
+        <Play size={12} />
+        {normalized}
+      </span>
+    )
+  }
+
+  if (normalized === "En attente") {
+    return (
+      <span className="inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-dashed border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
+        <Pause size={12} />
+        {normalized}
+      </span>
+    )
+  }
+
+  if (normalized === "Escaladé") {
+    return (
+      <span className="inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800 whitespace-nowrap border border-orange-200">
+        <ArrowUpRight size={12} />
+        {normalized}
+      </span>
+    )
+  }
+
+  if (normalized === "En attente de validation rejet") {
+    return (
+      <span className="inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800 whitespace-nowrap border border-orange-200">
+        <AlertTriangle size={12} />
+        {normalized}
+      </span>
+    )
+  }
+
+  if (normalized === "Résolu") {
+    return (
+      <span className="inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground whitespace-nowrap">
+        <Check size={12} />
+        {normalized}
+      </span>
+    )
+  }
+
+  if (normalized === "Clôturé") {
+    return (
+      <span className="inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-border bg-transparent px-2 py-0.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
+        <Lock size={12} />
+        {normalized}
+      </span>
+    )
+  }
+
+  if (normalized === "Rejeté") {
+    return (
+      <span className="inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-border bg-transparent px-2 py-0.5 text-xs font-medium text-muted-foreground whitespace-nowrap line-through">
+        <Archive size={12} />
+        {normalized}
+      </span>
+    )
+  }
+
+  return (
+    <span className="inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
+      {normalized}
+    </span>
+  )
 }
 
 function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, onAssignSuccess, sortBy, sortDescending, onSortChange }: {
@@ -251,7 +332,7 @@ function TicketTable({ tickets, pageNumber, pageSize, totalCount, onPageChange, 
                 <TableCell>{t.assignedTo}</TableCell>
                 <TableCell>{t.group || "-"}</TableCell>
                 <TableCell>
-                  <Badge variant="outline">{t.status}</Badge>
+                  <StatusBadge status={t.status} />
                 </TableCell>
                 <TableCell>{t.criticite ?? '-'}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">

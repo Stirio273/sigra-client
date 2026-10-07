@@ -116,7 +116,7 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
   }
 
   useEffect(() => {
-    if (!isAdmin) return
+    // if (!isAdmin) return
 
     let cancelled = false
     technicianService
