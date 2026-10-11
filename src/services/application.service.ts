@@ -1,4 +1,4 @@
-import type { Application, ClasseService, Criticite, JourFerie, KnowledgeFile } from "../types/application";
+import type { Application, ClasseService, Criticite, JourFerie, KnowledgeFile, DocumentUploadResult } from "../types/application";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const MOCK_USER_EMAIL = import.meta.env.VITE_MOCK_USER_EMAIL;
@@ -262,12 +262,14 @@ export const knowledgeService = {
     return response.json();
   },
 
-  uploadDocument: async (
+  uploadDocuments: async (
     idApplication: number,
-    file: File
-  ): Promise<KnowledgeFile> => {
+    files: File[]
+  ): Promise<DocumentUploadResult> => {
     const form = new FormData();
-    form.append("file", file);
+    for (const file of files) {
+      form.append("files", file);
+    }
     form.append("type", "document");
     form.append("idapplication", idApplication.toString());
 

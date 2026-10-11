@@ -30,7 +30,15 @@ import {
 import type { Application, KnowledgeFile } from "@/types/application";
 
 // const VIDEO_ACCEPT = ".mp4,.mov,.avi,.mkv,.webm,video/*";
-const DOCUMENT_ACCEPT = ".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const DOCUMENT_ACCEPT = ".pdf,.docx,.doc,.rst,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+const MAX_DOCUMENTS = 5;
+
+const DOCUMENT_TYPES = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
+];
 
 export default function Modules() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -138,26 +146,43 @@ export default function Modules() {
   // };
 
   const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !selectedAppId) return;
+    const selectedFiles = Array.from(e.target.files ?? []);
+    if (selectedFiles.length === 0 || !selectedAppId) return;
 
-    const validTypes = [
-      "application/pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/msword",
-    ];
-    const fileName = file.name.toLowerCase();
-    const validExtension = fileName.endsWith(".pdf") || fileName.endsWith(".docx") || fileName.endsWith(".doc") || fileName.endsWith(".rst");
+    if (selectedFiles.length > MAX_DOCUMENTS) {
+      setUploadError(
+        `Vous pouvez téléverser au maximum ${MAX_DOCUMENTS} documents à la fois.`
+      );
+      return;
+    }
 
-    if (!validTypes.includes(file.type) && !validExtension) {
-      setUploadError("Veuillez sélectionner un document PDF ou DOCX.");
+    const invalidFiles = selectedFiles.filter((file) => {
+      const fileName = file.name.toLowerCase();
+      const validExtension = fileName.endsWith(".pdf") || fileName.endsWith(".docx") || fileName.endsWith(".doc") || fileName.endsWith(".rst");
+      return !DOCUMENT_TYPES.includes(file.type) && !validExtension;
+    });
+
+    if (invalidFiles.length > 0) {
+      setUploadError(
+        `Format non pris en charge : ${invalidFiles.map((f) => f.name).join(", ")}. Formats acceptés : PDF, DOCX.`
+      );
       return;
     }
 
     try {
       setUploadingDoc(true);
       setUploadError(null);
-      await knowledgeService.uploadDocument(selectedAppId, file);
+      const result = await knowledgeService.uploadDocuments(selectedAppId, selectedFiles);
+
+      const failedFiles = result.files.filter((file) => !file.success);
+      if (failedFiles.length > 0) {
+        setUploadError(
+          `Échec du téléversement : ${failedFiles
+            .map((file) => `${file.nomFichier}${file.errorReason ? ` (${file.errorReason})` : ""}`)
+            .join(", ")}`
+        );
+      }
+
       await loadKnowledge();
     } catch (err) {
       setUploadError(
@@ -411,10 +436,10 @@ export default function Modules() {
                       <p className="text-sm font-medium">
                         {uploadingDoc
                           ? "Téléchargement en cours..."
-                          : "Cliquez pour ajouter un document"}
+                          : "Cliquez pour ajouter des documents"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Formats acceptés : PDF, DOCX
+                        Formats acceptés : PDF, DOCX • Maximum {MAX_DOCUMENTS} documents à la fois
                       </p>
                     </div>
                     <input
@@ -422,6 +447,7 @@ export default function Modules() {
                       type="file"
                       accept={DOCUMENT_ACCEPT}
                       className="hidden"
+                      multiple
                       onChange={handleDocUpload}
                       disabled={uploadingDoc}
                     />

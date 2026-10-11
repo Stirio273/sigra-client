@@ -31,6 +31,7 @@ import { entiteExterneService } from "@/services/entiteexterne.service"
 interface TicketSidebarProps {
   ticket: TicketMetadata
   onApplicationUpdated?: () => void
+  onTicketUpdated?: () => void
 }
 
 function Field({ label, value, mono }: { label: string; value: string | null | number; mono?: boolean }) {
@@ -54,7 +55,7 @@ function formatDate(value: string | number | null | undefined): string {
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
-function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
+function TicketSidebar({ ticket, onApplicationUpdated, onTicketUpdated }: TicketSidebarProps) {
   const authContext = useContext(AuthContext)
   const isAdmin = authContext?.user?.role === "Administrateur"
   const currentUserGuid = authContext?.user?.userGuid
@@ -97,6 +98,10 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
   const [closeOpen, setCloseOpen] = useState(false)
   const [selectedConfidence, setSelectedConfidence] = useState<number | null>(null)
   const [closeSubmitting, setCloseSubmitting] = useState(false)
+
+  const [exclureIaOpen, setExclureIaOpen] = useState(false)
+  const [exclureIaValue, setExclureIaValue] = useState(true)
+  const [exclureIaSubmitting, setExclureIaSubmitting] = useState(false)
 
   const availableActions = ticket.actionsDisponibles ?? []
   const hasAction = (code: string) => availableActions.includes(code)
@@ -303,6 +308,19 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
     }
   }
 
+  const handleExclureConnaissancesIa = async () => {
+    setExclureIaSubmitting(true)
+    try {
+      await ticketService.updateExclureConnaissancesIa(ticket.idTicket, exclureIaValue)
+      setExclureIaOpen(false)
+      onTicketUpdated?.()
+    } catch {
+      // handle error
+    } finally {
+      setExclureIaSubmitting(false)
+    }
+  }
+
   return (
     <aside className="w-full lg:w-80 space-y-4">
       <Card>
@@ -386,6 +404,49 @@ function TicketSidebar({ ticket, onApplicationUpdated }: TicketSidebarProps) {
               </DialogContent>
             </Dialog>
           )}
+          <Dialog key="exclure-connaissances-ia" open={exclureIaOpen} onOpenChange={setExclureIaOpen}>
+            <DialogTrigger
+              render={
+                <span className="text-muted-foreground cursor-pointer hover:text-foreground">
+                  Gérer les connaissances de l'IA
+                </span>
+              }
+              nativeButton={false}
+            />
+            <DialogContent className="w-full max-w-md">
+              <DialogTitle className="text-sm font-medium mb-2">
+                Connaissances IA du ticket {ticket.numeroTicket}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mb-3">
+                Choisissez si ce ticket doit servir de référence pour les suggestions de l'IA.
+              </DialogDescription>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="exclure-connaissances-ia"
+                    checked={exclureIaValue}
+                    onCheckedChange={(checked) => setExclureIaValue(checked === true)}
+                  />
+                  <label htmlFor="exclure-connaissances-ia" className="text-xs text-foreground cursor-pointer">
+                    Exclure des connaissances IA
+                  </label>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <DialogClose
+                    render={
+                      <Button variant="outline" size="sm" type="button">
+                        Annuler
+                      </Button>
+                    }
+                    nativeButton={false}
+                  />
+                  <Button size="sm" onClick={handleExclureConnaissancesIa} disabled={exclureIaSubmitting}>
+                    {exclureIaSubmitting ? "Envoi..." : "Enregistrer"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           {hasAction("AskForReject") && (
             <Dialog key="ask-for-reject" open={open} onOpenChange={setOpen}>
               <DialogTrigger

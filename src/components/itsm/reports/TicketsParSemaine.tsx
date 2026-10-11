@@ -27,8 +27,8 @@ const chartConfig = {
     label: "Respecte SLA",
     color: "var(--muted)",
   },
-  horsSLA: {
-    label: "Hors SLA",
+  total: {
+    label: "Total tickets",
     color: "var(--primary)",
   },
 } satisfies ChartConfig
@@ -89,12 +89,10 @@ export function TicketsParSemaine() {
   }
 
   const chartData = data.map((item) => {
-    const respecteSLA = item.slaReachedCount
-    const horsSLA = Math.max(item.count - respecteSLA, 0)
     return {
       semaine: `S${item.weekNumber}`,
-      respecteSLA,
-      horsSLA,
+      respecteSLA: item.slaReachedCount,
+      total: item.count,
     }
   })
 
@@ -123,8 +121,8 @@ export function TicketsParSemaine() {
                 axisLine={false}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="respecteSLA" fill="var(--color-respecteSLA)" stackId="a" radius={[0, 0, 4, 4]} />
-              <Bar dataKey="horsSLA" fill="var(--color-horsSLA)" stackId="a" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="respecteSLA" fill="var(--color-respecteSLA)" radius={4} />
+              <Bar dataKey="total" fill="var(--color-total)" radius={4} />
             </BarChart>
           </ChartContainer>
         )}

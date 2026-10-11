@@ -266,6 +266,19 @@ export const ticketService = {
     }
   },
 
+  updateExclureConnaissancesIa: async (idTicket: number, exclureConnaissancesIa: boolean): Promise<void> => {
+    const response = await fetch(`${API_URL}/tickets/${idTicket}/exclure-connaissances-ia`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: buildHeaders(),
+      body: JSON.stringify({ exclureConnaissancesIa }),
+    });
+
+    if (!response.ok) {
+      throw new Error('TICKET_EXCLURE_CONNAISSANCES_IA_FAILED');
+    }
+  },
+
   getComments: async (idTicket: number): Promise<TicketComment[]> => {
     const response = await fetch(`${API_URL}/tickets/${idTicket}/comments`, {
       method: 'GET',

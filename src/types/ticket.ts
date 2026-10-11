@@ -16,6 +16,7 @@ export type Ticket = {
   dateCloture: string | null;
   dureeSla: number;
   deadlineResolution: string | null;
+  exclureConnaissancesIa: boolean;
 };
 
 /** Paginated API response shape. */

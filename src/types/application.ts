@@ -16,6 +16,19 @@ export type KnowledgeFile = {
   chunkCount: number;
 };
 
+export type DocumentUploadFileResult = {
+  id: number | null;
+  nomFichier: string;
+  success: boolean;
+  errorReason?: string;
+};
+
+export type DocumentUploadResult = {
+  uploaded: number;
+  failed: number;
+  files: DocumentUploadFileResult[];
+};
+
 export type ClasseService = {
   idCs: number;
   code: string;

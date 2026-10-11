@@ -44,6 +44,7 @@ function mapTicketMetadata(detail: TicketDetail): TicketMetadata {
     application: detail.application?.libelle ?? "Indéterminé",
     criticite: detail.criticite?.libelle ?? "Indéterminé",
     actionsDisponibles: detail.actionsDisponibles,
+    exclureConnaissancesIa: detail.exclureConnaissancesIa ?? false,
   }
 }
 
@@ -106,6 +107,16 @@ export default function FicheTicket() {
   }
 
   const handleApplicationUpdated = async () => {
+    try {
+      const data = await ticketService.getById(ticketId)
+      setTicket(mapTicketMetadata(data))
+      setDetail(data)
+    } catch {
+      // handle error
+    }
+  }
+
+  const handleTicketUpdated = async () => {
     try {
       const data = await ticketService.getById(ticketId)
       setTicket(mapTicketMetadata(data))
@@ -251,7 +262,7 @@ export default function FicheTicket() {
             <CommentairesInternes ticketId={ticketId} />
             <AttachmentList attachments={attachments} />
           </main>
-          <TicketSidebar ticket={ticket} onApplicationUpdated={handleApplicationUpdated} />
+          <TicketSidebar ticket={ticket} onApplicationUpdated={handleApplicationUpdated} onTicketUpdated={handleTicketUpdated} />
         </div>
         <ChatBot ticketId={ticketId} />
       </div>

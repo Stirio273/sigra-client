@@ -1,3 +1,4 @@
+import { Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import type { TicketMetadata } from "@/types/fiche-ticket"
 
@@ -35,6 +36,12 @@ function TicketHeader({ ticket }: TicketHeaderProps) {
         </span>
         <Badge variant={priorityBadge(ticket.priority)}>{ticket.priority}</Badge>
         <Badge variant={statusBadge(ticket.status)}>{ticket.status}</Badge>
+        {!ticket.exclureConnaissancesIa && (
+          <Badge variant="secondary" className="gap-1">
+            <Sparkles className="h-3 w-3" />
+            Référence IA
+          </Badge>
+        )}
       </div>
       <h1 className="text-lg font-heading font-medium leading-tight">
         {ticket.subject}

@@ -14,6 +14,7 @@ export type TicketMetadata = {
   application: string
   criticite: string
   actionsDisponibles?: string[]
+  exclureConnaissancesIa?: boolean
 }
 
 export type EmailMessage = {
