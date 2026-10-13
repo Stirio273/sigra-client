@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Upload, FileText, Trash2, Loader2, Download } from "lucide-react";
+import { Upload, FileText, Trash2, Loader2, Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -8,6 +9,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Tabs,
   TabsContent,
@@ -21,18 +38,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import TopBar from "@/components/itsm/TopBar";
 import {
   applicationService,
   knowledgeService,
 } from "@/services/application.service";
 import type { Application, KnowledgeFile } from "@/types/application";
+import type { PaginatedResponse } from "@/types/ticket";
 
 // const VIDEO_ACCEPT = ".mp4,.mov,.avi,.mkv,.webm,video/*";
 const DOCUMENT_ACCEPT = ".pdf,.docx,.doc,.rst,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 const MAX_DOCUMENTS = 5;
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 400;
 
 const DOCUMENT_TYPES = [
   "application/pdf",
@@ -43,7 +62,11 @@ const DOCUMENT_TYPES = [
 export default function Modules() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [selectedAppId, setSelectedAppId] = useState<number | null>(null);
-  const [documents, setDocuments] = useState<KnowledgeFile[]>([]);
+  const [documentPage, setDocumentPage] = useState<PaginatedResponse<KnowledgeFile> | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [loadingApps, setLoadingApps] = useState(true);
   const [loadingKnowledge, setLoadingKnowledge] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +80,12 @@ export default function Modules() {
   const docInputRef = useRef<HTMLInputElement>(null);
 
   const selectedApp = applications.find((a) => a.idApplication === selectedAppId) ?? null;
+
+  const documents = documentPage?.items ?? [];
+  const totalCount = documentPage?.totalCount ?? 0;
+  const totalPages = Math.max(1, documentPage?.totalPages ?? 1);
+  const start = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(currentPage * PAGE_SIZE, totalCount);
 
   const loadApplications = useCallback(async () => {
     try {
@@ -81,43 +110,45 @@ export default function Modules() {
       setError(null);
       // setVideosError(null);
       setDocumentsError(null);
-      const [/* vidsResult, */ docsResult] = await Promise.allSettled([
-        // knowledgeService.getVideos(selectedAppId),
-        knowledgeService.getDocuments(selectedAppId),
-      ]);
-      // if (vidsResult.status === "fulfilled") {
-      //   setVideos(vidsResult.value);
-      // } else {
-      //   setVideosError(vidsResult.reason instanceof Error ? vidsResult.reason.message : "VIDEOS_FETCH_FAILED");
-      //   setVideos([]);
-      // }
-      if (docsResult.status === "fulfilled") {
-        setDocuments(docsResult.value);
-      } else {
-        setDocumentsError(docsResult.reason instanceof Error ? docsResult.reason.message : "DOCUMENTS_FETCH_FAILED");
-        setDocuments([]);
-      }
-    } catch {
-      setError("KNOWLEDGE_LOAD_FAILED");
+      const result = await knowledgeService.getDocuments(
+        selectedAppId,
+        currentPage,
+        PAGE_SIZE,
+        searchTerm
+      );
+      setDocumentPage(result);
+    } catch (err) {
+      setDocumentsError(err instanceof Error ? err.message : "DOCUMENTS_FETCH_FAILED");
+      setDocumentPage(null);
     } finally {
       setLoadingKnowledge(false);
     }
-  }, [selectedAppId]);
+  }, [selectedAppId, currentPage, searchTerm, refreshKey]);
 
   useEffect(() => {
     loadApplications();
   }, [loadApplications]);
 
   useEffect(() => {
-    if (selectedAppId) {
-      loadKnowledge();
-    } else {
-      setDocuments([]);
-      // setVideos([]);
-      setDocumentsError(null);
-      // setVideosError(null);
-    }
-  }, [selectedAppId, loadKnowledge]);
+    loadKnowledge();
+  }, [loadKnowledge]);
+
+  // Reset pagination and search whenever the selected application changes.
+  useEffect(() => {
+    setCurrentPage(1);
+    setSearchInput("");
+    setSearchTerm("");
+  }, [selectedAppId]);
+
+  // Debounce the search input so we do not fire a request on every keystroke.
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setSearchTerm(searchInput.trim());
+      setCurrentPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
 
   // const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   //   const file = e.target.files?.[0];
@@ -183,7 +214,11 @@ export default function Modules() {
         );
       }
 
-      await loadKnowledge();
+      // Reload from the first page without filters so the new files are visible.
+      setCurrentPage(1);
+      setSearchInput("");
+      setSearchTerm("");
+      setRefreshKey((key) => key + 1);
     } catch (err) {
       setUploadError(
         err instanceof Error ? err.message : "DOCUMENT_UPLOAD_FAILED"
@@ -196,14 +231,15 @@ export default function Modules() {
     }
   };
 
-  const handleDelete = async (id: number, type: "video" | "document") => {
+  const handleDelete = async (id: number) => {
     if (!selectedAppId) return;
+    const remaining = documents.length - 1;
     try {
       await knowledgeService.deleteKnowledge(id);
-      if (type === "video") {
-        // setVideos((prev) => prev.filter((v) => v.id !== id));
+      if (remaining === 0 && currentPage > 1) {
+        setCurrentPage((page) => Math.max(1, page - 1));
       } else {
-        setDocuments((prev) => prev.filter((d) => d.id !== id));
+        setRefreshKey((key) => key + 1);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "DELETE_FAILED");
@@ -460,58 +496,132 @@ export default function Modules() {
                     </div>
                   )}
 
-                  {loadingKnowledge ? (
+                  <div className="relative max-w-sm">
+                    <Search className="absolute left-2.5 top-2 size-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Rechercher un document par nom de fichier"
+                      className="pl-8"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                    />
+                  </div>
+
+                  {documentsError ? (
+                    <p className="text-sm text-red-600">Impossible de charger les documents : {documentsError}</p>
+                  ) : loadingKnowledge && documents.length === 0 ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="size-4 animate-spin" />
                       Chargement des documents...
                     </div>
-                  ) : documentsError ? (
-                    <p className="text-sm text-red-600">Impossible de charger les documents : {documentsError}</p>
                   ) : (
-                    <div className="space-y-2">
-                      {documents.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          Aucun document enregistré pour cette application.
-                        </p>
-                      ) : (
-                        documents.map((doc) => (
-                          <div
-                            key={doc.id}
-                            className="flex items-center justify-between rounded-md border p-3"
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileText className="size-4 text-muted-foreground" />
-                              <div className="space-y-0.5">
-                                <p className="text-sm font-medium">
+                    <div className="space-y-4">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Nom du fichier</TableHead>
+                            {/* <TableHead>Application</TableHead> */}
+                            <TableHead className="w-24">Chunks</TableHead>
+                            <TableHead className="w-28 text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {documents.length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={4}
+                                className="text-center text-sm text-muted-foreground"
+                              >
+                                {searchTerm
+                                  ? "Aucun document ne correspond à votre recherche."
+                                  : "Aucun document enregistré pour cette application."}
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            documents.map((doc) => (
+                              <TableRow key={doc.id}>
+                                <TableCell className="text-sm">
                                   {doc.nomFichier}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {doc.applicationName} • Chunks: {doc.chunkCount}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
-                                Document
-                              </Badge>
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => handleDownload(doc)}
-                              >
-                                <Download className="size-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => handleDelete(doc.id, "document")}
-                              >
-                                <Trash2 className="size-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))
+                                </TableCell>
+                                {/* <TableCell className="text-sm">
+                                  {doc.applicationName}
+                                </TableCell> */}
+                                <TableCell className="text-sm">
+                                  {doc.chunkCount}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      onClick={() => handleDownload(doc)}
+                                    >
+                                      <Download className="size-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      onClick={() => handleDelete(doc.id)}
+                                    >
+                                      <Trash2 className="size-4 text-destructive" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+
+                      {loadingKnowledge && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="size-4 animate-spin" />
+                          Chargement des documents...
+                        </div>
                       )}
+
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Affichage de {start} à {end} sur {totalCount} document
+                          {totalCount > 1 ? "s" : ""}
+                        </p>
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious
+                                text="Précédent"
+                                onClick={() =>
+                                  setCurrentPage((page) => Math.max(1, page - 1))
+                                }
+                                className={
+                                  currentPage === 1
+                                    ? "pointer-events-none opacity-50"
+                                    : "cursor-pointer"
+                                }
+                              />
+                            </PaginationItem>
+                            <PaginationItem>
+                              <PaginationLink isActive>
+                                {currentPage} / {totalPages}
+                              </PaginationLink>
+                            </PaginationItem>
+                            <PaginationItem>
+                              <PaginationNext
+                                text="Suivant"
+                                onClick={() =>
+                                  setCurrentPage((page) =>
+                                    Math.min(totalPages, page + 1)
+                                  )
+                                }
+                                className={
+                                  currentPage === totalPages
+                                    ? "pointer-events-none opacity-50"
+                                    : "cursor-pointer"
+                                }
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
                     </div>
                   )}
                 </CardContent>

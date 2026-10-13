@@ -1,4 +1,5 @@
 import type { Application, ClasseService, Criticite, JourFerie, KnowledgeFile, DocumentUploadResult } from "../types/application";
+import type { PaginatedResponse } from "../types/ticket";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const MOCK_USER_EMAIL = import.meta.env.VITE_MOCK_USER_EMAIL;
@@ -310,10 +311,22 @@ export const knowledgeService = {
   },
 
   getDocuments: async (
-    idApplication: number
-  ): Promise<KnowledgeFile[]> => {
+    idApplication: number,
+    pageNumber: number = 1,
+    pageSize: number = 10,
+    search?: string
+  ): Promise<PaginatedResponse<KnowledgeFile>> => {
+    const params = new URLSearchParams({
+      pageNumber: String(pageNumber),
+      pageSize: String(pageSize),
+    });
+
+    if (search) {
+      params.append("search", search);
+    }
+
     const response = await fetch(
-      `${API_URL}/application-documents/${idApplication}`,
+      `${API_URL}/application-documents/${idApplication}?${params.toString()}`,
       {
         method: "GET",
         credentials: "include",
