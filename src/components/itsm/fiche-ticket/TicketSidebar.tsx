@@ -62,6 +62,7 @@ function TicketSidebar({ ticket, onApplicationUpdated, onTicketUpdated }: Ticket
 
   const [open, setOpen] = useState(false)
   const [justificatif, setJustificatif] = useState("")
+  const [justificatifError, setJustificatifError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const [technicians, setTechnicians] = useState<Technician[]>([])
@@ -108,6 +109,11 @@ function TicketSidebar({ ticket, onApplicationUpdated, onTicketUpdated }: Ticket
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!justificatif.trim()) {
+      setJustificatifError(true)
+      return
+    }
+    setJustificatifError(false)
     setSubmitting(true)
     try {
       await ticketService.invalidateTicket(ticket.idTicket, justificatif)
@@ -467,11 +473,17 @@ function TicketSidebar({ ticket, onApplicationUpdated, onTicketUpdated }: Ticket
                 <form onSubmit={handleSubmit} className="space-y-3">
                   <textarea
                     value={justificatif}
-                    onChange={(e) => setJustificatif(e.target.value)}
+                    onChange={(e) => {
+                      setJustificatif(e.target.value)
+                      setJustificatifError(false)
+                    }}
                     placeholder="Justificatif..."
-                    className="w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px]"
+                    className={`w-full border rounded-none px-2 py-1.5 text-sm min-h-[80px] ${justificatifError ? "border-destructive" : ""}`}
                     required
                   />
+                  {justificatifError && (
+                    <span className="text-[10px] text-destructive">Veuillez remplir ce champ.</span>
+                  )}
                   <div className="flex justify-end gap-2">
                     <DialogClose
                       render={
